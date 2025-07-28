@@ -15,7 +15,7 @@ const Footer = () => {
               <span className="text-xl font-bold">अरुण कपडा पसल</span>
             </div>
             <p className="text-gray-300 leading-relaxed text-sm">
-              प्रिमियम गुणस्तरका कपडाहरूका लागि तपाईंको भरपर्दो साझेदार। १९९५ देखि नेपालभरका बी२बी ग्राहकहरूलाई उत्कृष्टताका साथ सेवा प्रदान गर्दै।
+              प्रिमियम गुणस्तरका कपडाहरूका लागि तपाईंको भरपर्दो साझेदार। 2076 देखि नेपालभरका बी२बी ग्राहकहरूलाई उत्कृष्टताका साथ सेवा प्रदान गर्दै।
             </p>
             <div className="flex space-x-4 mt-2">
               <a className="hover:text-white text-gray-400 transition-transform transform hover:scale-110" href="#"><Facebook className="h-5 w-5" /></a>
