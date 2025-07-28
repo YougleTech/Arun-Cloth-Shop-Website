@@ -7,11 +7,11 @@ const Header = () => {
 
   const navItems = [
     { np: "गृहपृष्ठ", en: "Home" },
-    { np: "नर्सरी", en: "Nursery" },
-    { np: "बिरुवाहरू", en: "Plants" },
+    { np: "कपडा सूची", en: "Clothing Catalogue" },
+    { np: "प्रकारहरू", en: "Categories" },
     { np: "ब्लग", en: "Blog" },
-    { np: "ग्यालरी", en: "Gallery" },
-    { np: "सम्पर्क", en: "Contact" },
+    { np: "ग्थोक अर्डर", en: "Wholesale Order" },
+    { np: "हाम्रो बारे", en: "About Us" },
   ];
 
   return (
