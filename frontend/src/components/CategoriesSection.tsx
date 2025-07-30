@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
+
 const categories = [
   {
-    id: 1,
+    id: "cotton",
     title: "कपासका कपडाहरू",
     subtitle: "प्रिमियम गुणस्तर",
     image: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=300&fit=crop",
@@ -8,7 +10,7 @@ const categories = [
     description: "दैनिक पहिरनका लागि शुद्ध कपासका कपडाहरू"
   },
   {
-    id: 2,
+    id: "silk",
     title: "रेशम संग्रह",
     subtitle: "लक्जरी रेन्ज",
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop",
@@ -16,7 +18,7 @@ const categories = [
     description: "विशेष अवसरहरूका लागि उत्कृष्ट रेशमी कपडाहरू"
   },
   {
-    id: 3,
+    id: "polyester",
     title: "पलिएस्टर मिश्रण",
     subtitle: "टिकाउ र सस्तो",
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=300&fit=crop",
@@ -24,7 +26,7 @@ const categories = [
     description: "आधुनिक कपडाका आवश्यकताहरूका लागि बहुमुखी मिश्रण"
   },
   {
-    id: 4,
+    id: "denim",
     title: "डेनिम र क्यानभास",
     subtitle: "हेभी ड्यूटी",
     image: "https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=400&h=300&fit=crop",
@@ -50,8 +52,9 @@ const CategoriesSection = () => {
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category) => (
-            <div
+            <Link
               key={category.id}
+              to={`/catalog/${category.id}`}
               className="group bg-white/10 border border-white/20 backdrop-blur rounded-2xl overflow-hidden transform hover:scale-105 hover:rotate-[1deg] transition-all duration-500 shadow-xl"
               style={{ perspective: "1000px" }}
             >
@@ -84,15 +87,18 @@ const CategoriesSection = () => {
                   <div className="text-xs text-white/60">प्रति मिटर</div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <button className="bg-yellow-400 text-black px-8 py-3 rounded-full font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300">
+          <Link
+            to="/catalog"
+            className="inline-block bg-yellow-400 text-black px-8 py-3 rounded-full font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300"
+          >
             सबै प्रकारहरू हेर्नुहोस्
-          </button>
+          </Link>
         </div>
       </div>
     </section>
