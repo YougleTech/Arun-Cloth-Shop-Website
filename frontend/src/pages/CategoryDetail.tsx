@@ -72,7 +72,7 @@ const CategoryDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">श्रेणी फेला परेन</h1>
+          <h1 className="text-2xl font-bold mb-4 text-white">श्रेणी फेला परेन</h1>
           <Link
             to="/catalog"
             className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
@@ -93,7 +93,7 @@ const CategoryDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800">
       <Header />
 
       {/* Hero Section */}
@@ -116,10 +116,10 @@ const CategoryDetail = () => {
             <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
             <p className="text-lg mb-4">{category.description}</p>
             <div className="flex gap-4">
-              <span className="bg-white/20 px-3 py-1 rounded text-sm">
+              <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded text-sm">
                 {category.totalProducts} वस्तुहरू
               </span>
-              <span className="bg-white/20 px-3 py-1 rounded text-sm">
+              <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded text-sm">
                 मूल्य: {category.priceRange}
               </span>
             </div>
@@ -129,21 +129,25 @@ const CategoryDetail = () => {
 
       <div className="container mx-auto px-4 py-12">
         {/* Toolbar */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 text-white">
           <div>
             <h2 className="text-xl font-bold">{category.fabrics.length} वस्तुहरू फेला परे</h2>
-            <p className="text-gray-600">{category.name}</p>
+            <p className="text-white/70">{category.name}</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded ${viewMode === "grid" ? "bg-purple-600 text-white" : "bg-gray-100"}`}
+              className={`p-2 rounded backdrop-blur-md ${
+                viewMode === "grid" ? "bg-purple-600 text-white" : "bg-white/20 text-white"
+              }`}
             >
               <Grid />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${viewMode === "list" ? "bg-purple-600 text-white" : "bg-gray-100"}`}
+              className={`p-2 rounded backdrop-blur-md ${
+                viewMode === "list" ? "bg-purple-600 text-white" : "bg-white/20 text-white"
+              }`}
             >
               <List />
             </button>
@@ -161,23 +165,23 @@ const CategoryDetail = () => {
           {category.fabrics.map((fabric) => (
             <div
               key={fabric.id}
-              className="bg-white rounded-lg shadow hover:shadow-lg transition p-4"
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:shadow-lg transition p-4 text-white"
             >
               <div className="relative">
                 <img
                   src={fabric.image}
                   alt={fabric.name}
-                  className="w-full h-48 object-cover rounded"
+                  className="w-full h-48 object-cover rounded-lg"
                 />
                 <button
                   onClick={() => toggleFavorite(fabric.id)}
-                  className="absolute top-2 right-2 p-2 rounded-full bg-white shadow"
+                  className="absolute top-2 right-2 p-2 rounded-full bg-white/20 backdrop-blur-md shadow-md"
                 >
                   <Heart
                     className={`h-5 w-5 ${
                       favorites.includes(fabric.id)
                         ? "fill-red-500 text-red-500"
-                        : "text-gray-500"
+                        : "text-white"
                     }`}
                   />
                 </button>
@@ -189,22 +193,22 @@ const CategoryDetail = () => {
               </div>
               <div className="mt-4">
                 <h3 className="font-bold">{fabric.name}</h3>
-                <p className="text-sm text-gray-600">{fabric.gsm} • {fabric.width}</p>
+                <p className="text-sm text-white/80">{fabric.gsm} • {fabric.width}</p>
                 <div className="flex items-center mt-2">
                   <Star className="text-yellow-400 fill-yellow-400 h-4 w-4" />
                   <span className="ml-1 text-sm">{fabric.rating}</span>
-                  <span className="ml-1 text-xs text-gray-500">({fabric.reviews})</span>
+                  <span className="ml-1 text-xs text-white/70">({fabric.reviews})</span>
                 </div>
                 <div className="flex justify-between items-center mt-3">
-                  <span className="text-purple-600 font-bold">रु {fabric.price}</span>
+                  <span className="text-yellow-300 font-bold">रु {fabric.price}</span>
                   <Link
                     to={`/catalog/product/${fabric.id}`}
-                    className="bg-purple-600 text-white text-sm px-3 py-1 rounded hover:bg-purple-700"
+                    className="bg-yellow-400 text-black text-sm px-3 py-1 rounded hover:bg-yellow-300"
                   >
                     विवरण
                   </Link>
-                  <button className="bg-gray-100 p-2 rounded-full hover:bg-gray-200">
-                    <ShoppingCart className="h-4 w-4 text-gray-600" />
+                  <button className="bg-white/20 backdrop-blur-md p-2 rounded-full hover:bg-white/30">
+                    <ShoppingCart className="h-4 w-4 text-white" />
                   </button>
                 </div>
               </div>

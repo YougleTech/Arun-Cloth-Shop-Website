@@ -10,6 +10,7 @@
 body {
   @apply bg-white text-gray-900;
 }
+
 body {
   font-family: 'Inter', sans-serif;
   background: linear-gradient(to bottom right, #ef4444, #ec4899, #8b5cf6);

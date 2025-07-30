@@ -93,11 +93,11 @@ const Catalog = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800">
       <Header />
 
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-r from-pink-500 to-purple-600 relative">
+      <section className="py-16 relative">
         <div className="container mx-auto text-center text-white">
           <h1 className="text-4xl font-bold mb-4">कपडा सूची</h1>
           <p className="text-lg mb-8">नेपालको सबैभन्दा ठूलो कपडा संग्रह</p>
@@ -107,7 +107,7 @@ const Catalog = () => {
               placeholder="कपडा खोज्नुहोस्..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/20 backdrop-blur text-white placeholder:text-white/70"
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/20 backdrop-blur-md text-white placeholder:text-white/70"
             />
             <Search className="absolute left-3 top-3 text-white/70" />
           </div>
@@ -117,12 +117,14 @@ const Catalog = () => {
       <div className="container mx-auto px-4 py-12 flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}
         <aside className="lg:w-64 space-y-4">
-          <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="font-bold text-lg mb-4">प्रकारहरू</h2>
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 shadow-md">
+            <h2 className="font-bold text-lg mb-4 text-white">प्रकारहरू</h2>
             <button
               onClick={() => setSearchParams({ category: "all" })}
               className={`block w-full text-left p-2 rounded ${
-                categoryFromUrl === "all" ? "bg-purple-600 text-white" : "hover:bg-gray-100"
+                categoryFromUrl === "all"
+                  ? "bg-purple-600 text-white"
+                  : "text-white hover:bg-white/10"
               }`}
             >
               सबै कपडाहरू ({fabrics.length})
@@ -132,7 +134,9 @@ const Catalog = () => {
                 key={cat.id}
                 onClick={() => setSearchParams({ category: cat.id })}
                 className={`block w-full text-left p-2 rounded ${
-                  categoryFromUrl === cat.id ? "bg-purple-600 text-white" : "hover:bg-gray-100"
+                  categoryFromUrl === cat.id
+                    ? "bg-purple-600 text-white"
+                    : "text-white hover:bg-white/10"
                 }`}
               >
                 {cat.name} ({cat.count})
@@ -143,20 +147,24 @@ const Catalog = () => {
 
         {/* Main Content */}
         <main className="flex-1">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6 text-white">
             <h2 className="text-xl font-bold">
               {filteredFabrics.length} वस्तुहरू फेला परे
             </h2>
             <div className="flex gap-2">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded ${viewMode === "grid" ? "bg-purple-600 text-white" : "bg-gray-100"}`}
+                className={`p-2 rounded backdrop-blur-md ${
+                  viewMode === "grid" ? "bg-purple-600 text-white" : "bg-white/20 text-white"
+                }`}
               >
                 <Grid />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2 rounded ${viewMode === "list" ? "bg-purple-600 text-white" : "bg-gray-100"}`}
+                className={`p-2 rounded backdrop-blur-md ${
+                  viewMode === "list" ? "bg-purple-600 text-white" : "bg-white/20 text-white"
+                }`}
               >
                 <List />
               </button>
@@ -172,23 +180,23 @@ const Catalog = () => {
             {filteredFabrics.map((fabric) => (
               <div
                 key={fabric.id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition p-4"
+                className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:shadow-lg transition p-4 text-white"
               >
                 <div className="relative">
                   <img
                     src={fabric.image}
                     alt={fabric.name}
-                    className="w-full h-48 object-cover rounded"
+                    className="w-full h-48 object-cover rounded-lg"
                   />
                   <button
                     onClick={() => toggleFavorite(fabric.id)}
-                    className="absolute top-2 right-2 p-2 rounded-full bg-white shadow"
+                    className="absolute top-2 right-2 p-2 rounded-full bg-white/20 backdrop-blur-md shadow-md"
                   >
                     <Heart
                       className={`h-5 w-5 ${
                         favorites.includes(fabric.id)
                           ? "fill-red-500 text-red-500"
-                          : "text-gray-500"
+                          : "text-white"
                       }`}
                     />
                   </button>
@@ -200,18 +208,18 @@ const Catalog = () => {
                 </div>
                 <div className="mt-4">
                   <h3 className="font-bold">{fabric.name}</h3>
-                  <p className="text-sm text-gray-600">{fabric.material}</p>
+                  <p className="text-sm text-white/80">{fabric.material}</p>
                   <div className="flex items-center mt-2">
                     <Star className="text-yellow-400 fill-yellow-400 h-4 w-4" />
                     <span className="ml-1 text-sm">{fabric.rating}</span>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-purple-600 font-bold">
+                    <span className="text-yellow-300 font-bold">
                       रु {fabric.price}
                     </span>
                     <Link
                       to={`/catalog/product/${fabric.id}`}
-                      className="text-sm text-white bg-purple-600 px-3 py-1 rounded hover:bg-purple-700"
+                      className="text-sm bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-300"
                     >
                       विवरण
                     </Link>
