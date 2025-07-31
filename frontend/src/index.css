@@ -90,3 +90,8 @@ a.group:hover span:last-child {
 .text-primary {
   color: #f472b6; /* Pink-400 (adjust as needed) */
 }
+
+
+.input {
+  @apply w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70;
+}
