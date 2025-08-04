@@ -10,6 +10,7 @@ import { useCart } from "../contexts/CartContext";
 const Cart = () => {
   const { state, actions } = useCart();
   const { state: authState } = useAuth();
+  const isStaff = authState.user?.is_staff;
   const [showOrderForm, setShowOrderForm] = useState(false);
 
   // Load cart when component mounts
@@ -178,9 +179,15 @@ const Cart = () => {
                       <div className="text-center min-w-[80px]">
                         <p className="font-bold">{item.quantity} मिटर</p>
                         <p className="text-xs text-gray-300">मात्रा</p>
+                        {isStaff ? (
                         <p className="text-sm text-green-400 font-medium">
                           रु. {item.total_price}
                         </p>
+                      ) : (
+                        <p className="text-sm text-yellow-300 font-semibold text-xs">
+                          मूल्य प्राप्त गर्न व्हाट्सएपमा सम्पर्क गर्नुहोस्
+                        </p>
+)}
                       </div>
                       
                       {/* Action Buttons */}
@@ -218,10 +225,19 @@ const Cart = () => {
                 </div>
                 {state.cart && (
                   <>
-                    <div className="flex justify-between">
-                      <span>कुल रकम:</span>
-                      <span className="font-semibold text-green-400">रु. {state.cart.total_amount}</span>
-                    </div>
+                    {isStaff && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>कुल रकम:</span>
+                          <span className="font-semibold text-green-400">रु. {state.cart.total_amount}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>होलसेल रकम:</span>
+                          <span className="font-semibold text-blue-400">रु. {state.cart.total_wholesale_amount}</span>
+                        </div>
+                      </>
+                    )}
+
                     <div className="flex justify-between">
                       <span>होलसेल रकम:</span>
                       <span className="font-semibold text-blue-400">रु. {state.cart.total_wholesale_amount}</span>
@@ -244,6 +260,30 @@ const Cart = () => {
                 <div className="bg-white/10 border border-white/20 backdrop-blur rounded-lg p-6 shadow space-y-4 text-center">
                   <h3 className="text-xl font-bold">अर्डर पूरा गर्नुहोस्</h3>
                   <p className="text-gray-300">तपाईंको कार्ट तयार छ, अर्डर विवरण पेश गर्नुहोस्।</p>
+                    {!isStaff && (
+                      <a
+                        href={`https://wa.me/447810373066?text=${encodeURIComponent(
+                          `नमस्ते! म ${authState.user?.full_name} (${authState.user?.email}) हुँ।
+
+                    मैले निम्न कपडाहरू अर्डर गर्न चाहेको छु:\n\n${cartItems
+                            .map(
+                              (item, index) =>
+                              `${index + 1}. ${item.product.name}\n- सामग्री: ${item.product.material}\n- GSM: ${item.product.gsm}\n- रंग: ${item.product.primary_color}\n- मात्राः ${item.quantity} मिटर` +
+                              (item.preferred_colors ? `\n- मनपर्ने रंग: ${item.preferred_colors}` : '') +
+                              (item.special_instructions ? `\n- विशेष निर्देशन: ${item.special_instructions}` : '')
+                            )
+                            .join('\n\n')}
+                            
+                    कृपया मूल्य जानकारी र अर्डर पुष्टि विवरण पठाउनुहोस्।
+                    धन्यवाद!`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-block text-center bg-green-500 text-white px-4 py-3 rounded font-semibold hover:bg-green-600 transition"
+                      >
+                        WhatsApp बाट अर्डर गर्नुहोस्
+                      </a>
+                    )}
                   <button
                     onClick={() => setShowOrderForm(true)}
                     className="w-full px-4 py-3 bg-yellow-400 text-black rounded font-semibold hover:scale-105 transition"
