@@ -1,326 +1,513 @@
-import {
-    ChevronLeft,
-    ChevronRight,
-    Heart,
-    Minus,
-    Phone,
-    Plus,
-    RotateCcw,
-    Share2,
-    Shield,
-    ShoppingCart,
-    Star,
-    Truck,
-} from "lucide-react";
-import { useState } from "react";
+import { Heart, Minus, Plus, ShoppingCart, Star, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-
-const productData = {
-  1: {
-    id: 1,
-    name: "प्रिमियम कपास",
-    category: "cotton",
-    price: 120,
-    originalPrice: 150,
-    images: [
-      "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&h=600&fit=crop",
-    ],
-    rating: 4.8,
-    reviews: 156,
-    colors: ["सेतो", "नीलो", "रातो", "कालो", "हरियो", "पहेंलो"],
-    material: "१००% शुद्ध कपास",
-    width: "४५ इन्च",
-    gsm: "१८० जीएसएम",
-    description:
-      "यो उच्च गुणस्तरको कपासको कपडा दैनिक पहिरनका लागि उत्तम छ। यसको नरम बनावट र टिकाउपनले यसलाई शर्ट, पोशाक र अन्य वस्त्रहरूका लागि आदर्श बनाउँछ।",
-    features: [
-      "१००% प्राकृतिक कपास फाइबर",
-      "सास फेर्न मिल्ने र आरामदायक",
-      "धुन सजिलो र टिकाउ",
-      "रङ नझर्ने गुणस्तर",
-      "OEKO-TEX Standard 100 प्रमाणित",
-    ],
-    careInstructions: [
-      "मध्यम तापमानमा धुनुहोस्",
-      "ब्लीच प्रयोग नगर्नुहोस्",
-      "कम तापमा इस्त्री गर्नुहोस्",
-      "ड्राई क्लिनिङ सिफारिस गरिएको",
-    ],
-    availability: "स्टकमा उपलब्ध",
-    minimumOrder: "१० मिटर",
-    shippingTime: "२-३ दिन",
-  },
-};
+import LoadingSpinner from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { useCart } from "../contexts/CartContext";
+import { apiService } from "../services/api";
+import type { ProductDetail as ProductDetailType, ProductReview } from "../types";
 
 const ProductDetail = () => {
-  const { id } = useParams();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedColor, setSelectedColor] = useState("");
-  const [quantity, setQuantity] = useState(10);
+  const { slug } = useParams<{ slug: string }>();
+  const { state: cartState, actions: cartActions } = useCart();
+  const { state: authState } = useAuth();
+  const [product, setProduct] = useState<ProductDetailType | null>(null);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
+  const [preferredColors, setPreferredColors] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [addToCartSuccess, setAddToCartSuccess] = useState(false);
 
-  const product = productData[Number(id) as keyof typeof productData];
-  if (!product) return <div className="text-center mt-20 text-white">उत्पादन फेला परेन</div>;
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (!slug) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const [productData, reviewsData] = await Promise.all([
+          apiService.getProduct(slug),
+          apiService.getProductReviews(slug).catch(() => []) // Reviews are optional
+        ]);
+        
+        setProduct(productData);
+        setReviews(reviewsData);
+      } catch (err) {
+        setError("उत्पादनको विवरण लोड गर्न सकिएन। पछि प्रयास गर्नुहोस्।");
+        console.error("Error fetching product:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const nextImage = () =>
-    setCurrentImageIndex((prev) =>
-      prev === product.images.length - 1 ? 0 : prev + 1
+    fetchProductData();
+  }, [slug]);
+
+  // Initialize quantity with minimum order quantity when product loads
+  useEffect(() => {
+    if (product) {
+      setQuantity(product.minimum_order_quantity);
+    }
+  }, [product]);
+
+  // Handle quantity changes
+  const handleQuantityChange = (delta: number) => {
+    if (!product) return;
+    
+    const newQuantity = quantity + delta;
+    const minQuantity = product.minimum_order_quantity;
+    const maxQuantity = product.stock_quantity;
+    
+    if (newQuantity >= minQuantity && newQuantity <= maxQuantity) {
+      setQuantity(newQuantity);
+    }
+  };
+
+  // Handle add to cart
+  const handleAddToCart = async () => {
+    if (!product || !authState.isAuthenticated) {
+      if (!authState.isAuthenticated) {
+        alert("कार्टमा थप्न पहिले लगइन गर्नुहोस्।");
+      }
+      return;
+    }
+
+    try {
+      await cartActions.addToCart(
+        product.id,
+        quantity,
+        preferredColors,
+        specialInstructions
+      );
+      setAddToCartSuccess(true);
+      setTimeout(() => setAddToCartSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("कार्टमा थप्न सकिएन। पछि प्रयास गर्नुहोस्।");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800">
+        <Header />
+        <LoadingSpinner fullScreen text="उत्पादनको विवरण लोड हुँदै..." />
+      </div>
     );
-  const prevImage = () =>
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? product.images.length - 1 : prev - 1
-    );
+  }
 
-  const totalPrice = quantity * product.price;
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800">
+        <Header />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <div className="text-white text-xl mb-4">{error || "उत्पादन फेला परेन"}</div>
+          <Link
+            to="/catalog"
+            className="bg-yellow-400 text-black px-6 py-2 rounded hover:bg-yellow-300 transition-colors"
+          >
+            सूचीमा फर्किनुहोस्
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const getPriceDisplay = () => {
+    const price = parseFloat(product.price_per_meter);
+    const wholesalePrice = parseFloat(product.wholesale_price);
+    const hasDiscount = wholesalePrice < price;
+    
+    return {
+      currentPrice: wholesalePrice,
+      originalPrice: hasDiscount ? price : null,
+      discount: hasDiscount ? Math.round(((price - wholesalePrice) / price) * 100) : 0
+    };
+  };
+
+  const priceInfo = getPriceDisplay();
+  const totalPrice = priceInfo.currentPrice * quantity;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800">
       <Header />
 
-      {/* Breadcrumb */}
-      <div className="container mx-auto px-4 py-6 text-white/80">
-        <nav className="flex items-center gap-2 text-sm">
-          <Link to="/" className="hover:text-yellow-300">मुख्य पृष्ठ</Link>
-          <span>/</span>
-          <Link to="/catalog" className="hover:text-yellow-300">कपडा सूची</Link>
-          <span>/</span>
-          <span>{product.name}</span>
-        </nav>
-      </div>
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-white/80 mb-6">
+          <Link to="/" className="hover:text-white">होम</Link>
+          <span>›</span>
+          <Link to="/catalog" className="hover:text-white">सूची</Link>
+          <span>›</span>
+          <Link to={`/catalog/category/${product.category.id}`} className="hover:text-white">
+            {product.category.name}
+          </Link>
+          <span>›</span>
+          <span className="text-yellow-300">{product.name}</span>
+        </div>
 
-      <div className="container mx-auto px-4 pb-12 grid grid-cols-1 lg:grid-cols-2 gap-12 text-white">
-        {/* Image Gallery */}
-        <div>
-          <div className="relative rounded-lg overflow-hidden bg-white/10 backdrop-blur-md border border-white/20">
-            <img
-              src={product.images[currentImageIndex]}
-              alt={product.name}
-              className="w-full h-96 object-cover"
-            />
-            <button
-              onClick={prevImage}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 p-2 rounded-full"
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 p-2 rounded-full"
-            >
-              <ChevronRight />
-            </button>
-            {product.originalPrice > product.price && (
-              <span className="absolute top-4 left-4 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                -{Math.round((1 - product.price / product.originalPrice) * 100)}% छुट
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Product Images */}
+          <div className="space-y-4">
+            <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden">
+              <img
+                src={product.images[selectedImageIndex]?.image || "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=600&h=400&fit=crop"}
+                alt={product.name}
+                className="w-full h-96 object-cover"
+              />
+              <button
+                onClick={() => setIsFavorite(!isFavorite)}
+                className="absolute top-4 right-4 p-3 rounded-full bg-white/20 backdrop-blur-md shadow-md hover:bg-white/30 transition-all"
+              >
+                <Heart
+                  className={`h-6 w-6 ${
+                    isFavorite ? "fill-red-500 text-red-500" : "text-white hover:text-red-300"
+                  }`}
+                />
+              </button>
+              {priceInfo.discount > 0 && (
+                <span className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded font-semibold">
+                  -{priceInfo.discount}% छुट
+                </span>
+              )}
+            </div>
+
+            {/* Image Thumbnails */}
+            {product.images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto">
+                {product.images.map((image, index) => (
+                  <button
+                    key={image.id}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                      selectedImageIndex === index
+                        ? "border-yellow-300"
+                        : "border-white/20 hover:border-white/40"
+                    }`}
+                  >
+                    <img
+                      src={image.image}
+                      alt={image.alt_text}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Thumbnails */}
-          <div className="grid grid-cols-4 gap-2 mt-3">
-            {product.images.map((img, idx) => (
+          {/* Product Info */}
+          <div className="text-white space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+              <p className="text-white/80 text-lg">{product.category.name}</p>
+            </div>
+
+            {/* Rating */}
+            <div className="flex items-center gap-2">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`h-5 w-5 ${
+                      star <= product.average_rating
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-white/80">
+                ({product.reviews_count} समीक्षाहरू)
+              </span>
+            </div>
+
+            {/* Price */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-yellow-300">
+                  रु {priceInfo.currentPrice}
+                </span>
+                {priceInfo.originalPrice && (
+                  <span className="text-xl line-through text-white/60">
+                    रु {priceInfo.originalPrice}
+                  </span>
+                )}
+                <span className="text-white/80">प्रति मिटर</span>
+              </div>
+              <div className="text-sm text-white/70">
+                न्यूनतम अर्डर: {product.minimum_order_quantity} मिटर
+              </div>
+            </div>
+
+            {/* Product Specifications */}
+            <div className="grid grid-cols-2 gap-4 p-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg">
+              <div>
+                <span className="text-white/70 text-sm">सामग्री:</span>
+                <div className="font-semibold">
+                  {product.material === 'cotton' ? 'कपास' :
+                   product.material === 'silk' ? 'रेशम' :
+                   product.material === 'wool' ? 'ऊन' :
+                   product.material === 'polyester' ? 'पलिएस्टर' :
+                   product.material === 'khadi' ? 'खादी' :
+                   product.material}
+                </div>
+              </div>
+              <div>
+                <span className="text-white/70 text-sm">GSM:</span>
+                <div className="font-semibold">{product.gsm}</div>
+              </div>
+              <div>
+                <span className="text-white/70 text-sm">चौडाई:</span>
+                <div className="font-semibold">{product.width}</div>
+              </div>
+              <div>
+                <span className="text-white/70 text-sm">स्टक:</span>
+                <div className="font-semibold">
+                  {product.stock_quantity} मिटर
+                </div>
+              </div>
+            </div>
+
+            {/* Colors */}
+            <div>
+              <span className="text-white/70 text-sm block mb-2">उपलब्ध रङहरू:</span>
+              <div className="flex flex-wrap gap-2">
+                {product.available_colors_list.map((color, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-sm"
+                  >
+                    {color.trim()}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Preferred Colors Input */}
+            <div>
+              <label className="text-white/70 text-sm block mb-2">
+                मनपर्ने रङहरू (वैकल्पिक):
+              </label>
+              <input
+                type="text"
+                value={preferredColors}
+                onChange={(e) => setPreferredColors(e.target.value)}
+                placeholder="जस्तै: नीलो, रातो, हरियो"
+                className="w-full p-3 bg-white/10 backdrop-blur-md border border-white/30 rounded-lg text-white placeholder-white/50 focus:border-yellow-300 focus:outline-none"
+              />
+            </div>
+
+            {/* Special Instructions */}
+            <div>
+              <label className="text-white/70 text-sm block mb-2">
+                विशेष निर्देशन (वैकल्पिक):
+              </label>
+              <textarea
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+                placeholder="कुनै विशेष आवश्यकता वा निर्देशन..."
+                rows={3}
+                className="w-full p-3 bg-white/10 backdrop-blur-md border border-white/30 rounded-lg text-white placeholder-white/50 focus:border-yellow-300 focus:outline-none resize-none"
+              />
+            </div>
+
+            {/* Quantity & Add to Cart */}
+            <div className="space-y-4">
+              <div>
+                <span className="text-white/70 text-sm block mb-2">मात्रा (मिटरमा):</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={quantity <= product.minimum_order_quantity}
+                    className="p-2 bg-white/20 backdrop-blur-md border border-white/30 rounded hover:bg-white/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <span className="text-xl font-semibold w-16 text-center">{quantity}</span>
+                  <button
+                    onClick={() => handleQuantityChange(1)}
+                    disabled={quantity >= product.stock_quantity}
+                    className="p-2 bg-white/20 backdrop-blur-md border border-white/30 rounded hover:bg-white/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-2xl font-bold text-yellow-300">
+                कुल मूल्य: रु {totalPrice.toFixed(2)}
+              </div>
+
+              {/* Success Message */}
+              {addToCartSuccess && (
+                <div className="p-3 bg-green-500/20 border border-green-400 text-green-300 rounded-lg">
+                  ✅ कार्टमा सफलतापूर्वक थपियो!
+                </div>
+              )}
+
+              {/* Error Messages */}
+              {cartState.error.addItem && (
+                <div className="p-3 bg-red-500/20 border border-red-400 text-red-300 rounded-lg">
+                  {cartState.error.addItem}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!product.is_in_stock || cartState.loading.addItem}
+                  className="flex-1 flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {cartState.loading.addItem ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                      थप्दै...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-5 w-5" />
+                      कार्टमा थप्नुहोस्
+                    </>
+                  )}
+                </button>
+                <Link
+                  to={`/quick-order?product=${product.slug}&quantity=${quantity}`}
+                  className="flex-1 flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-semibold py-3 px-6 rounded-lg transition-all text-center"
+                >
+                  <Truck className="h-5 w-5" />
+                  तुरुन्त अर्डर
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Details Tabs */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden">
+          <div className="flex border-b border-white/20">
+            {[
+              { key: "description", label: "विवरण" },
+              { key: "specifications", label: "विशेषताहरू" },
+              { key: "care", label: "हेरचाह" },
+              { key: "reviews", label: "समीक्षाहरू" }
+            ].map((tab) => (
               <button
-                key={idx}
-                onClick={() => setCurrentImageIndex(idx)}
-                className={`overflow-hidden rounded-lg ${
-                  currentImageIndex === idx
-                    ? "ring-2 ring-yellow-300 scale-105"
-                    : "hover:scale-105"
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-6 py-4 font-semibold transition-all ${
+                  activeTab === tab.key
+                    ? "text-yellow-300 border-b-2 border-yellow-300"
+                    : "text-white/70 hover:text-white"
                 }`}
               >
-                <img src={img} className="w-full h-20 object-cover" />
+                {tab.label}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Product Info */}
-        <div className="space-y-6">
-          <div className="flex justify-between">
-            <h1 className="text-3xl font-bold">{product.name}</h1>
-            <div className="flex gap-2">
-              <button
-                className={`p-2 rounded-full bg-white/20 hover:bg-white/30 ${
-                  isFavorite ? "text-red-500" : "text-white"
-                }`}
-                onClick={() => setIsFavorite(!isFavorite)}
-              >
-                <Heart />
-              </button>
-              <button className="p-2 rounded-full bg-white/20 hover:bg-white/30">
-                <Share2 />
-              </button>
-            </div>
-          </div>
-
-          {/* Rating */}
-          <div className="flex items-center gap-2">
-            <Star className="text-yellow-400 fill-yellow-400" />
-            <span>{product.rating}</span>
-            <span className="text-sm text-white/70">
-              ({product.reviews} समीक्षाहरू)
-            </span>
-            <span className="ml-4 bg-green-500/20 text-green-300 px-2 py-1 rounded text-sm">
-              {product.availability}
-            </span>
-          </div>
-
-          {/* Price */}
-          <div className="flex items-center gap-4">
-            <span className="text-4xl font-bold text-yellow-300">
-              रु {product.price}
-            </span>
-            {product.originalPrice > product.price && (
-              <span className="line-through text-white/70">
-                रु {product.originalPrice}
-              </span>
-            )}
-            <span className="text-sm text-white/70">प्रति मिटर</span>
-          </div>
-
-          {/* Quick Specs */}
-          <div className="grid grid-cols-2 gap-4 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-lg text-sm">
-            <div>सामग्री: <strong>{product.material}</strong></div>
-            <div>चौडाई: <strong>{product.width}</strong></div>
-            <div>जीएसएम: <strong>{product.gsm}</strong></div>
-            <div>न्यूनतम अर्डर: <strong>{product.minimumOrder}</strong></div>
-          </div>
-
-          {/* Colors */}
-          <div>
-            <p className="font-medium mb-2">रङ छान्नुहोस्:</p>
-            <div className="flex gap-2 flex-wrap">
-              {product.colors.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setSelectedColor(color)}
-                  className={`px-4 py-1 rounded border ${
-                    selectedColor === color
-                      ? "bg-yellow-300 text-black"
-                      : "bg-white/10 backdrop-blur-md hover:bg-white/20"
-                  }`}
-                >
-                  {color}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Quantity */}
-          <div>
-            <p className="font-medium mb-2">परिमाण (मिटरमा):</p>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-lg">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3"
-                >
-                  <Minus />
-                </button>
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) =>
-                    setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-                  }
-                  className="w-20 text-center bg-transparent outline-none"
-                />
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-3"
-                >
-                  <Plus />
-                </button>
+          <div className="p-6 text-white">
+            {activeTab === "description" && (
+              <div className="space-y-4">
+                <p className="text-lg leading-relaxed">{product.description}</p>
+                {product.usage && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">प्रयोग:</h3>
+                    <p className="text-white/80">
+                      {product.usage === 'shirt' ? 'शर्ट' :
+                       product.usage === 'trouser' ? 'ट्राउजर' :
+                       product.usage === 'dress' ? 'पोशाक' :
+                       product.usage === 'saree' ? 'साडी' :
+                       product.usage === 'ethnic_wear' ? 'जातीय पोशाक' :
+                       product.usage}
+                    </p>
+                  </div>
+                )}
               </div>
-              <span className="text-xl font-bold text-yellow-300">
-                कुल: रु {totalPrice}
-              </span>
-            </div>
+            )}
+
+            {activeTab === "specifications" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-white/70">सामग्री:</span>
+                    <span className="font-semibold">{product.material}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">GSM:</span>
+                    <span className="font-semibold">{product.gsm}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">चौडाई:</span>
+                    <span className="font-semibold">{product.width}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-white/70">मुख्य रङ:</span>
+                    <span className="font-semibold">{product.primary_color}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">न्यूनतम अर्डर:</span>
+                    <span className="font-semibold">{product.minimum_order_quantity} मिटर</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">स्टक:</span>
+                    <span className="font-semibold">{product.stock_quantity} मिटर</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "care" && (
+              <div>
+                <p className="text-lg leading-relaxed">
+                  {product.care_instructions || "हेरचाहका निर्देशनहरू उपलब्ध छैन।"}
+                </p>
+              </div>
+            )}
+
+            {activeTab === "reviews" && (
+              <div className="space-y-6">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <div key={review.id} className="border-b border-white/20 pb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold">{review.customer_name}</span>
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= review.rating
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-white/80">{review.review_text}</p>
+                      <div className="text-xs text-white/60 mt-2">
+                        {new Date(review.created_at).toLocaleDateString('ne-NP')}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-white/70">अहिलेसम्म कुनै समीक्षा छैन।</p>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <button className="flex-1 bg-yellow-300 text-black px-4 py-3 rounded hover:bg-yellow-200 flex items-center justify-center gap-2">
-              <ShoppingCart /> कार्टमा थप्नुहोस्
-            </button>
-            <button className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-3 rounded hover:bg-white/20">
-              अब अर्डर गर्नुहोस्
-            </button>
-          </div>
-
-          {/* Features */}
-          <div className="grid sm:grid-cols-3 gap-4 text-sm mt-4">
-            <div className="flex items-center gap-2">
-              <Truck className="text-yellow-300" /> निःशुल्क डेलिभरी
-            </div>
-            <div className="flex items-center gap-2">
-              <Shield className="text-yellow-300" /> गुणस्तर ग्यारेन्टी
-            </div>
-            <div className="flex items-center gap-2">
-              <RotateCcw className="text-yellow-300" /> ७ दिन फिर्ता
-            </div>
-          </div>
-
-          {/* Contact */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-lg flex items-center gap-3">
-            <Phone className="text-yellow-300" />
-            <div>
-              <p className="font-medium">थोक अर्डरका लागि सम्पर्क गर्नुहोस्:</p>
-              <p className="text-yellow-300 font-bold">+९७७-९८०१२३४५६७</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs Section */}
-      <div className="container mx-auto px-4 mt-12 text-white">
-        <div className="flex border-b border-white/20">
-          {["description", "features", "care", "reviews"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 text-center py-2 ${
-                activeTab === tab
-                  ? "border-b-2 border-yellow-300 font-bold"
-                  : "text-white/70"
-              }`}
-            >
-              {tab === "description"
-                ? "विवरण"
-                : tab === "features"
-                ? "विशेषताहरू"
-                : tab === "care"
-                ? "हेरचाह"
-                : "समीक्षाहरू"}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-lg mt-4">
-          {activeTab === "description" && <p>{product.description}</p>}
-          {activeTab === "features" && (
-            <ul className="space-y-2">
-              {product.features.map((f, idx) => (
-                <li key={idx}>• {f}</li>
-              ))}
-            </ul>
-          )}
-          {activeTab === "care" && (
-            <ul className="space-y-2">
-              {product.careInstructions.map((c, idx) => (
-                <li key={idx}>• {c}</li>
-              ))}
-            </ul>
-          )}
-          {activeTab === "reviews" && (
-            <p className="text-white/70">ग्राहक समीक्षाहरू यहाँ आउनेछन्...</p>
-          )}
         </div>
       </div>
 

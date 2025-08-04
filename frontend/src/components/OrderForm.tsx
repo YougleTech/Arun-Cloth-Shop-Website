@@ -28,7 +28,6 @@ interface OrderFormProps {
 }
 
 const OrderForm = ({
-  productId,
   productName,
   variant = "quick",
   onSubmit,

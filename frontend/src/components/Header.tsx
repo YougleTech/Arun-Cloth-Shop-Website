@@ -1,12 +1,19 @@
+import React from 'react';
 import { Menu, ShoppingCart, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
+import { useCart } from "../contexts/CartContext";
+import { useAuth } from "../contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { state: cartState } = useCart();
+  const { state: authState } = useAuth();
+
+  const totalItems = cartState.cart?.total_items || 0;
 
   const navItems = [
     { np: "गृहपृष्ठ", en: "Home", path: "/" },
@@ -89,24 +96,34 @@ const Header = () => {
         {/* Right Side */}
         <div className="flex items-center space-x-4">
           {/* Cart */}
-          <div
-            aria-label="Cart"
+          <Link
+            to="/cart"
             className="relative hover:scale-110 transition-transform cursor-pointer"
+            aria-label="Cart"
           >
             <ShoppingCart className="h-5 w-5 text-white" />
-            <span className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-              ३
-            </span>
-          </div>
-
-          {/* Login */}
-          <Link
-            to="/login"
-            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded-full font-semibold hover:scale-105 transition-transform"
-          >
-            <User className="h-4 w-4" />
-            लग इन
+            {authState.isAuthenticated && totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {totalItems > 99 ? '99+' : totalItems}
+              </span>
+            )}
           </Link>
+
+          {/* Login/User */}
+          {authState.isAuthenticated ? (
+            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-full font-semibold">
+              <User className="h-4 w-4" />
+              {authState.user?.first_name || 'प्रयोगकर्ता'}
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded-full font-semibold hover:scale-105 transition-transform"
+            >
+              <User className="h-4 w-4" />
+              लग इन
+            </Link>
+          )}
 
           {/* Mobile Menu Button */}
           <button
