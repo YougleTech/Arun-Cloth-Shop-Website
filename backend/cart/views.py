@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from products.models import Product
+from decimal import Decimal
 from .models import Cart, CartItem, SavedItem
 from .serializers import (
     CartSerializer, CartItemSerializer, AddToCartSerializer,
@@ -198,7 +199,7 @@ class CartViewSet(viewsets.ModelViewSet):
         
         # Calculate tax (13% VAT in Nepal)
         taxable_amount = subtotal - discount_amount
-        tax_amount = taxable_amount * 0.13
+        tax_amount = taxable_amount * Decimal("0.13")
         
         # Shipping cost (can be dynamic based on location/weight)
         shipping_cost = self.calculate_shipping_cost(cart, request.user)
