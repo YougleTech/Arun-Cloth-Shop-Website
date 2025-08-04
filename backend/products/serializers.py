@@ -20,12 +20,14 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductListSerializer(serializers.ModelSerializer):
-    """Simplified serializer for product lists"""
     category_name = serializers.CharField(source='category.name', read_only=True)
     main_image = serializers.CharField(read_only=True)
     available_colors_list = serializers.ListField(read_only=True)
     is_in_stock = serializers.BooleanField(read_only=True)
-    
+
+    price_per_meter = serializers.SerializerMethodField()
+    wholesale_price = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = [
@@ -35,9 +37,15 @@ class ProductListSerializer(serializers.ModelSerializer):
             'is_available', 'is_featured', 'is_in_stock', 'tags', 'stock_quantity'
         ]
 
+    def get_price_per_meter(self, obj):
+        request = self.context.get('request')
+        return obj.price_per_meter if request and request.user.is_staff else None
+
+    def get_wholesale_price(self, obj):
+        request = self.context.get('request')
+        return obj.wholesale_price if request and request.user.is_staff else None
 
 class ProductDetailSerializer(serializers.ModelSerializer):
-    """Detailed serializer for individual product pages"""
     category = CategorySerializer(read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     available_colors_list = serializers.ListField(read_only=True)
@@ -45,6 +53,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     reviews_count = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
     
+    price_per_meter = serializers.SerializerMethodField()
+    wholesale_price = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = [
@@ -56,7 +67,15 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'meta_title', 'meta_description', 'reviews_count', 'average_rating',
             'created_at', 'updated_at'
         ]
-    
+
+    def get_price_per_meter(self, obj):
+        request = self.context.get('request')
+        return obj.price_per_meter if request and request.user.is_staff else None
+
+    def get_wholesale_price(self, obj):
+        request = self.context.get('request')
+        return obj.wholesale_price if request and request.user.is_staff else None
+
     def get_reviews_count(self, obj):
         return obj.reviews.filter(is_approved=True).count()
     
@@ -66,7 +85,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             total_rating = sum(review.rating for review in approved_reviews)
             return round(total_rating / approved_reviews.count(), 1)
         return 0
-
 
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating products"""

@@ -111,3 +111,11 @@ export interface QuoteRequest extends ContactForm {
   delivery_location: string;
   urgency: 'low' | 'medium' | 'high';
 }
+
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string;
+  is_staff: boolean;
+  
+}

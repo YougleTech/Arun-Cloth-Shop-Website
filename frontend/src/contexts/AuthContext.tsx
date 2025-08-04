@@ -23,6 +23,7 @@ interface User {
   email_verified: boolean;
   phone_verified: boolean;
   created_at: string;
+  is_staff: boolean;
   last_login: string | null;
 }
 

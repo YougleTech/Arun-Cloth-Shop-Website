@@ -230,24 +230,29 @@ const ProductDetail = () => {
                 ({product.reviews_count} समीक्षाहरू)
               </span>
             </div>
-
-            {/* Price */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-yellow-300">
-                  रु {priceInfo.currentPrice}
-                </span>
-                {priceInfo.originalPrice && (
-                  <span className="text-xl line-through text-white/60">
-                    रु {priceInfo.originalPrice}
+            {/* Price - visible only to staff */}
+            {authState.user?.is_staff ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-bold text-yellow-300">
+                    रु {priceInfo.currentPrice}
                   </span>
-                )}
-                <span className="text-white/80">प्रति मिटर</span>
+                  {priceInfo.originalPrice && (
+                    <span className="text-xl line-through text-white/60">
+                      रु {priceInfo.originalPrice}
+                    </span>
+                  )}
+                  <span className="text-white/80">प्रति मिटर</span>
+                </div>
+                <div className="text-sm text-white/70">
+                  न्यूनतम अर्डर: {product.minimum_order_quantity} मिटर
+                </div>
               </div>
-              <div className="text-sm text-white/70">
-                न्यूनतम अर्डर: {product.minimum_order_quantity} मिटर
+            ) : (
+              <div className="text-white/70 text-sm italic">
+                मूल्य विवरण जान्नको लागि कृपया कोट अनुरोध गर्नुहोस्।
               </div>
-            </div>
+            )}
 
             {/* Product Specifications */}
             <div className="grid grid-cols-2 gap-4 p-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg">
@@ -344,9 +349,32 @@ const ProductDetail = () => {
                 </div>
               </div>
 
+              {authState.user?.is_staff ? (
               <div className="text-2xl font-bold text-yellow-300">
                 कुल मूल्य: रु {totalPrice.toFixed(2)}
               </div>
+              ) : (
+                <a
+                  href={`https://wa.me/447810373066?text=${encodeURIComponent(
+                    `नमस्कार ,\n\n` +
+                    `म ${authState.user?.full_name || 'ग्राहक'} (${authState.user?.email || 'इमेल छैन'}) हुँ ।\n` +
+                    `मेरो फोन नम्बर: ${authState.user?.phone || 'नै दिएको छैन'}\n\n` +
+                    `म तलको उत्पादनको मूल्य कोट माग्न चाहन्छु:\n\n` +
+                    `उत्पादनको नाम: ${product.name}\n` +
+                    `मात्रा: ${quantity} मिटर\n` +
+                    `रङ रुचि: ${preferredColors || 'रहेको छैन'}\n` +
+                    `विशेष निर्देशन: ${specialInstructions || 'रहेको छैन'}\n\n` +
+                    `उत्पादन लिंक: ${window.location.href}\n\n` +
+                    `कृपया मलाई मूल्य र उपलब्धता जानकारी पठाउनुहोस्।\nधन्यवाद। `
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center bg-green-500 hover:bg-green-400 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                >
+                📩 मूल्य कोट माग्नुहोस् WhatsApp बाट
+              </a>
+            )}
+
 
               {/* Success Message */}
               {addToCartSuccess && (

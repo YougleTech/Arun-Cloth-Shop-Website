@@ -7,17 +7,32 @@ from .models import Order, OrderItem, OrderStatusHistory, QuoteRequest
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)
-    total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
-    wholesale_total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
-    
+    total_price = serializers.SerializerMethodField()
+    wholesale_total_price = serializers.SerializerMethodField()
+    show_price = serializers.SerializerMethodField()
+
     class Meta:
         model = OrderItem
         fields = [
-            'id', 'product', 'product_name', 'quantity', 'unit_price', 
+            'id', 'product', 'product_name', 'quantity', 'unit_price',
             'wholesale_price', 'total_price', 'wholesale_total_price',
-            'preferred_colors', 'special_instructions', 'created_at'
+            'preferred_colors', 'special_instructions', 'created_at',
+            'show_price',
         ]
 
+    def get_show_price(self, obj):
+        request = self.context.get('request')
+        return bool(getattr(request.user, 'is_staff', False))
+
+    def get_total_price(self, obj):
+        if self.get_show_price(obj):
+            return obj.total_price
+        return None
+
+    def get_wholesale_total_price(self, obj):
+        if self.get_show_price(obj):
+            return obj.wholesale_total_price
+        return None
 
 class OrderListSerializer(serializers.ModelSerializer):
     """Simplified serializer for order lists"""
@@ -35,28 +50,32 @@ class OrderListSerializer(serializers.ModelSerializer):
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
-    """Detailed serializer for individual orders"""
-    items = OrderItemSerializer(many=True, read_only=True)
-    shipping_address = UserAddressSerializer(read_only=True)
-    billing_address = UserAddressSerializer(read_only=True)
-    total_items = serializers.IntegerField(read_only=True)
-    can_cancel = serializers.BooleanField(read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    payment_status_display = serializers.CharField(source='get_payment_status_display', read_only=True)
-    payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
-    
+    ...
+    show_price = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
         fields = [
-            'id', 'order_number', 'status', 'status_display', 'payment_status', 
-            'payment_status_display', 'payment_method', 'payment_method_display',
+            ...,
             'subtotal', 'discount_amount', 'tax_amount', 'shipping_cost', 'total_amount',
-            'is_wholesale_order', 'wholesale_discount_percent', 'items', 'total_items',
-            'shipping_address', 'billing_address', 'estimated_delivery_date',
-            'actual_delivery_date', 'delivery_instructions', 'customer_notes',
-            'tracking_number', 'courier_service', 'can_cancel',
-            'created_at', 'updated_at', 'confirmed_at', 'shipped_at', 'delivered_at'
+            'is_wholesale_order', 'wholesale_discount_percent',
+            ..., 'show_price',
         ]
+
+    def get_show_price(self, obj):
+        request = self.context.get('request')
+        return bool(getattr(request.user, 'is_staff', False))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data['show_price']:
+            # Hide all pricing fields
+            data['subtotal'] = None
+            data['discount_amount'] = None
+            data['tax_amount'] = None
+            data['total_amount'] = None
+            data['wholesale_discount_percent'] = None
+        return data
 
 
 class CreateOrderSerializer(serializers.Serializer):
