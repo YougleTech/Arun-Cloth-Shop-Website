@@ -68,8 +68,8 @@ const OrderForm = ({
       form.reset({
         customerName: user.full_name || "",
         email: user.email || "",
-        phone: user.phone_number || "",
-        company: user.company || "",
+        phone: user.phone || "",
+        company: user.company_name || "",
         address: user.address || "",
         city: user.city || "",
         orderType: "retail",
