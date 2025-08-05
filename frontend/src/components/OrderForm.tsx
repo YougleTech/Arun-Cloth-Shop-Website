@@ -1,8 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar, Mail, MapPin, Package, Phone, ShoppingCart, User } from "lucide-react";
-import { useState } from "react";
+import {
+  Calendar,
+  Mail,
+  MapPin,
+  Package,
+  Phone,
+  ShoppingCart,
+  User,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useAuth } from "../contexts/AuthContext";
 
 const orderSchema = z.object({
   customerName: z.string().min(2, "नाम कम्तिमा २ अक्षर हुनुपर्छ"),
@@ -34,6 +43,8 @@ const OrderForm = ({
   className = "",
 }: OrderFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { state } = useAuth(); // ✅ Get the full auth state
+  const user = state.user;     // ✅ Access the user object safely
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -51,6 +62,24 @@ const OrderForm = ({
     },
   });
 
+  // ✅ Auto-fill form when user is available
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        customerName: user.full_name || "",
+        email: user.email || "",
+        phone: user.phone_number || "",
+        company: user.company || "",
+        address: user.address || "",
+        city: user.city || "",
+        orderType: "retail",
+        quantity: 1,
+        deliveryDate: "",
+        notes: "",
+      });
+    }
+  }, [user, form]);
+
   const handleSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true);
     try {
@@ -67,6 +96,12 @@ const OrderForm = ({
 
   return (
     <div className={`rounded-xl p-6 bg-white/30 backdrop-blur shadow-xl ${className}`}>
+      {!user && (
+        <div className="bg-yellow-100 text-yellow-800 p-3 rounded text-sm mb-4">
+          कृपया लगइन गर्नुहोस् ताकि अर्डर फारम स्वचालित रूपमा भरियोस्।
+        </div>
+      )}
+
       <div className="mb-6">
         <h2 className="text-xl font-bold flex items-center gap-2 text-purple-700">
           {variant === "bulk" ? <Package /> : <ShoppingCart />}
@@ -97,11 +132,15 @@ const OrderForm = ({
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="font-medium flex items-center gap-1"><Mail className="h-4 w-4" /> इमेल *</label>
+              <label className="font-medium flex items-center gap-1">
+                <Mail className="h-4 w-4" /> इमेल *
+              </label>
               <input type="email" {...form.register("email")} className="input" />
             </div>
             <div>
-              <label className="font-medium flex items-center gap-1"><Phone className="h-4 w-4" /> फोन *</label>
+              <label className="font-medium flex items-center gap-1">
+                <Phone className="h-4 w-4" /> फोन *
+              </label>
               <input type="text" {...form.register("phone")} className="input" />
             </div>
           </div>
@@ -140,14 +179,14 @@ const OrderForm = ({
               <label className="font-medium">मात्रा *</label>
               <input
                 type="number"
-                {...form.register("quantity", {
-                  valueAsNumber: true,
-                })}
+                {...form.register("quantity", { valueAsNumber: true })}
                 className="input"
               />
             </div>
             <div>
-              <label className="font-medium flex items-center gap-1"><Calendar className="h-4 w-4" /> चाहिने मिति *</label>
+              <label className="font-medium flex items-center gap-1">
+                <Calendar className="h-4 w-4" /> चाहिने मिति *
+              </label>
               <input type="date" {...form.register("deliveryDate")} className="input" />
             </div>
           </div>
