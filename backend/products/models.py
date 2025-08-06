@@ -131,10 +131,13 @@ class Product(models.Model):
 
     @property
     def main_image(self):
-        """Get the first image as main image"""
-        first_image = self.images.first()
-        return first_image.image.url if first_image else None
-    
+        """Return the primary image URL, or fallback to first image"""
+        primary_image = self.images.filter(is_primary=True).first()
+        if primary_image:
+            return primary_image.image.url
+        fallback_image = self.images.first()
+        return fallback_image.image.url if fallback_image else None
+        
     @property
     def available_colors_list(self):
         """Return colors as a list"""

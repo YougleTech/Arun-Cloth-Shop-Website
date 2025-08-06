@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
 import type { Product } from "../types";
-
+const BASE_MEDIA_URL = "http://127.0.0.1:8001/"
 interface ProductCardProps {
   product: Product;
   viewMode?: "grid" | "list";
@@ -73,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:shadow-lg transition-all duration-300 text-white ${viewMode === 'list' ? 'flex gap-4' : ''}`}>
       <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}>
         <img
-          src={product.main_image || "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=300&fit=crop"}
+          src={product.main_image ? `${BASE_MEDIA_URL}${product.main_image}` : "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=300&fit=crop"}
           alt={product.name}
           className={`object-cover rounded-lg ${viewMode === 'list' ? 'w-full h-32' : 'w-full h-48'}`}
         />

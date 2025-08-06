@@ -1,13 +1,13 @@
-import { Grid, List, Filter, ArrowLeft } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, Filter, Grid, List } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import ProductCard from "../components/ProductCard";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ProductCard from "../components/ProductCard";
 import { useApp } from "../contexts/AppContext";
 import { apiService } from "../services/api";
-import type { Product, Category } from "../types";
+import type { Category, Product } from "../types";
 
 const CategoryDetail = () => {
   const { categoryId } = useParams<{ categoryId: string }>();

@@ -65,7 +65,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'wholesale_price', 'minimum_order_quantity', 'stock_quantity',
             'is_available', 'is_featured', 'is_in_stock', 'tags', 'images',
             'meta_title', 'meta_description', 'reviews_count', 'average_rating',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'main_image'
         ]
 
     def get_price_per_meter(self, obj):
@@ -86,6 +86,14 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             return round(total_rating / approved_reviews.count(), 1)
         return 0
 
+    main_image = serializers.SerializerMethodField()
+
+    def get_main_image(self, obj):
+        request = self.context.get('request')
+        if obj.main_image and request:
+            return request.build_absolute_uri(obj.main_image)
+        return None
+    
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating products"""
     
