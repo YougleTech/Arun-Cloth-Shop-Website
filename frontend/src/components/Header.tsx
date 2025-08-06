@@ -31,6 +31,11 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = "/login";
+  };
+
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-500 ${
@@ -108,11 +113,24 @@ const Header = () => {
             )}
           </Link>
 
-          {/* Login/User */}
+          {/* Authenticated Actions */}
           {authState.isAuthenticated ? (
-            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-full font-semibold">
-              <User className="h-4 w-4" />
-              {authState.user?.first_name || 'प्रयोगकर्ता'}
+            <div className="hidden sm:flex items-center gap-3">
+              {/* Dashboard */}
+              <Link
+                to={authState.user?.is_staff ? "/admin/dashboard" : "/dashboard"}
+                className="px-4 py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition"
+              >
+                ड्यासबोर्ड
+              </Link>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition"
+              >
+                लग आउट
+              </button>
             </div>
           ) : (
             <Link
@@ -159,15 +177,33 @@ const Header = () => {
               );
             })}
 
-            {/* Login Button - Mobile */}
-            <Link
-              to="/login"
-              className="flex items-center justify-center gap-2 mt-4 bg-yellow-400 text-black px-4 py-2 rounded-full font-semibold"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <User className="h-4 w-4" />
-              लग इन
-            </Link>
+            {/* Auth Buttons - Mobile */}
+            {authState.isAuthenticated ? (
+              <>
+                <Link
+                  to={authState.user?.is_staff ? "/admin/dashboard" : "/dashboard"}
+                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full font-semibold text-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  ड्यासबोर्ड
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="mt-2 bg-red-500 text-white px-4 py-2 rounded-full font-semibold"
+                >
+                  लग आउट
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center justify-center gap-2 mt-4 bg-yellow-400 text-black px-4 py-2 rounded-full font-semibold"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <User className="h-4 w-4" />
+                लग इन
+              </Link>
+            )}
           </nav>
         </div>
       )}

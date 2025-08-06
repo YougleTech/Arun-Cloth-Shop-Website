@@ -95,12 +95,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'email', 'username', 'first_name', 'last_name', 'full_name', 'display_name',
-            'phone', 'company_name', 'business_type', 'gst_number', 'address', 'city', 
-            'state', 'pincode', 'profile_image', 'date_of_birth', 'gender', 
+            'phone', 'company_name', 'business_type', 'gst_number', 'address', 'city',
+            'state', 'pincode', 'profile_image', 'date_of_birth', 'gender',
             'preferred_language', 'is_wholesale_customer', 'wholesale_discount',
-            'email_verified', 'phone_verified', 'created_at', 'last_login'
+            'email_verified', 'phone_verified', 'created_at', 'last_login', 'is_staff'
         ]
-        read_only_fields = ['id', 'email', 'wholesale_discount', 'email_verified', 'phone_verified', 'created_at', 'last_login']
+        read_only_fields = ['id', 'email', 'wholesale_discount', 'email_verified', 'phone_verified', 'created_at', 'last_login', 'is_staff']
 
 
 class UserProfileDetailSerializer(serializers.ModelSerializer):

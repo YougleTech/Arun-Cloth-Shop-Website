@@ -38,6 +38,7 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  rehydrated: boolean;
 }
 
 interface LoginResponse {
@@ -68,7 +69,8 @@ type AuthAction =
   | { type: 'LOGIN_SUCCESS'; payload: { user: User; tokens: AuthTokens } }
   | { type: 'LOGOUT' }
   | { type: 'UPDATE_USER'; payload: User }
-  | { type: 'UPDATE_TOKENS'; payload: AuthTokens };
+  | { type: 'UPDATE_TOKENS'; payload: AuthTokens }
+  | { type: 'SET_REHYDRATED'; payload: boolean };
 
 const initialState: AuthState = {
   user: null,
@@ -76,6 +78,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   loading: false,
   error: null,
+  rehydrated: false,
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -108,6 +111,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return { ...state, tokens: action.payload };
     default:
       return state;
+    case 'SET_REHYDRATED':
+      return { ...state, rehydrated: action.payload };
   }
 }
 
@@ -274,11 +279,12 @@ useEffect(() => {
   const user = storage.getUser();
   const tokens = storage.getTokens();
 
-  console.log("🔐 Rehydrating Auth from storage:", { user, tokens }); // ✅ Debug
+  console.log("🔐 Rehydrating Auth from storage:", { user, tokens }); 
 
   if (user && tokens) {
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user, tokens } });
   }
+  dispatch({ type: 'SET_REHYDRATED', payload: true });
 }, []);
 
   useEffect(() => {
