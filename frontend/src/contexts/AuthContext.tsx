@@ -10,7 +10,7 @@ interface User {
   last_name: string;
   full_name: string;
   display_name: string;
-  phone: string;
+  phone: number;
   company_name: string;
   business_type: string;
   address: string;
@@ -24,6 +24,7 @@ interface User {
   phone_verified: boolean;
   created_at: string;
   is_staff: boolean;
+  is_admin: boolean;
   last_login: string | null;
 }
 
@@ -122,9 +123,13 @@ class AuthService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
+    const isFormData = options.body instanceof FormData;
+
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData
+          ? {} // 👈 Don't set 'Content-Type' for FormData
+          : { 'Content-Type': 'application/json' }),
         ...options.headers,
       },
       ...options,
@@ -139,7 +144,6 @@ class AuthService {
 
     return data as T;
   }
-
   async register(userData: any): Promise<RegisterResponse> {
     return this.request<RegisterResponse>('/accounts/register/', {
       method: 'POST',
@@ -177,12 +181,15 @@ class AuthService {
   }
 
   async updateProfile(accessToken: string, profileData: any): Promise<UpdateProfileResponse> {
+    const isFormData = profileData instanceof FormData;
+
     return this.request<UpdateProfileResponse>('/accounts/profile/update_profile/', {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }), // Don't set Content-Type for FormData
       },
-      body: JSON.stringify(profileData),
+      body: profileData,
     });
   }
 

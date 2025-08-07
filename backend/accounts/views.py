@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 import secrets
 from datetime import timedelta
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import User, UserProfile, UserAddress, EmailVerification, PasswordResetToken
 from .serializers import (
@@ -111,9 +112,13 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
     
-    @action(detail=False, methods=['put', 'patch'])
+
+    @action(detail=False, methods=['put', 'patch'], parser_classes=[MultiPartParser, FormParser])
     def update_profile(self, request):
-        """Update user profile"""
+        """Update user profile with or without image"""
+        print("🔍 request.FILES =>", request.FILES)
+        print("📦 request.data =>", request.data)
+
         serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -122,6 +127,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
                 'user': serializer.data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     
     @action(detail=False, methods=['post'])
     def change_password(self, request):

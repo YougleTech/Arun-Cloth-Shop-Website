@@ -90,7 +90,8 @@ class UserLoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
     display_name = serializers.CharField(read_only=True)
-    
+    profile_image = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = User
         fields = [
@@ -100,7 +101,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'preferred_language', 'is_wholesale_customer', 'wholesale_discount',
             'email_verified', 'phone_verified', 'created_at', 'last_login', 'is_staff'
         ]
-        read_only_fields = ['id', 'email', 'wholesale_discount', 'email_verified', 'phone_verified', 'created_at', 'last_login', 'is_staff']
+        read_only_fields = [
+            'id', 'email', 'wholesale_discount', 'email_verified',
+            'phone_verified', 'created_at', 'last_login', 'is_staff'
+        ]
+
 
 
 class UserProfileDetailSerializer(serializers.ModelSerializer):

@@ -16,6 +16,7 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 
+import EditProfile from "./pages/DashboardFeatures/EditProfile";
 import AdminRoute from "./routes/AdminRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -37,6 +38,7 @@ function App() {
               <Route path="/cart" element={<Cart />} />
               <Route path="/bulk-order" element={<BulkOrder />} />
               <Route path="/quick-order" element={<QuickOrder />} />
+              <Route path="/profile" element={<EditProfile />} />
 
               {/* Protected Routes */}
               <Route

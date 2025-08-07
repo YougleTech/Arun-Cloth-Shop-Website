@@ -118,7 +118,7 @@ const Header = () => {
             <div className="hidden sm:flex items-center gap-3">
               {/* Dashboard */}
               <Link
-                to={authState.user?.is_staff ? "/admin/dashboard" : "/dashboard"}
+                to={authState.user?.is_staff ? "/dashboard" : "/dashboard"}
                 className="px-4 py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition"
               >
                 ड्यासबोर्ड
@@ -181,7 +181,7 @@ const Header = () => {
             {authState.isAuthenticated ? (
               <>
                 <Link
-                  to={authState.user?.is_staff ? "/admin/dashboard" : "/dashboard"}
+                  to={authState.user?.is_staff ? "/dashboard" : "/dashboard"}
                   className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full font-semibold text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
