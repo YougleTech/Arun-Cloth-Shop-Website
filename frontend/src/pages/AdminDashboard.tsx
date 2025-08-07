@@ -25,7 +25,6 @@ const AdminDashboard = () => {
 
   if (!user) return null;
 
-  // Admin card data
   const adminCards = [
     {
       icon: <UserCog className="w-6 h-6" />,
@@ -38,6 +37,7 @@ const AdminDashboard = () => {
       title: "उत्पादनहरू व्यवस्थापन",
       desc: "उत्पादनहरू थप्नुहोस्, अपडेट गर्नुहोस् वा हटाउनुहोस्।",
       gradient: "from-indigo-500 to-purple-500",
+      link: "/admin/products", // ✅ click leads to /admin/products
     },
     {
       icon: <FileText className="w-6 h-6" />,
@@ -91,6 +91,7 @@ const AdminDashboard = () => {
             {adminCards.map((item, index) => (
               <div
                 key={index}
+                onClick={() => item.link && navigate(item.link)}
                 className="relative group bg-white/10 border border-white/20 backdrop-blur-lg rounded-xl p-6 shadow-lg hover:scale-105 transition-transform cursor-pointer overflow-hidden"
               >
                 {/* Gradient Glow Background */}

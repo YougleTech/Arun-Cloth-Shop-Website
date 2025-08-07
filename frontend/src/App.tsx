@@ -3,6 +3,7 @@ import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 
+// Public Pages
 import BulkOrder from "./pages/BulkOrder";
 import Cart from "./pages/Cart";
 import Catalog from "./pages/Catalog";
@@ -13,10 +14,15 @@ import ProductDetail from "./pages/ProductDetail";
 import QuickOrder from "./pages/QuickOrder";
 import Register from "./pages/Register";
 
+// Dashboards & Profile
 import AdminDashboard from "./pages/AdminDashboard";
+import EditProfile from "./pages/DashboardFeatures/EditProfile";
 import UserDashboard from "./pages/UserDashboard";
 
-import EditProfile from "./pages/DashboardFeatures/EditProfile";
+// Admin Pages
+import ProductList from "./pages/AdminFeatures/ProductList";
+import ProductManagement from "./pages/AdminFeatures/ProductManagement";
+// Route Guards
 import AdminRoute from "./routes/AdminRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -40,7 +46,7 @@ function App() {
               <Route path="/quick-order" element={<QuickOrder />} />
               <Route path="/profile" element={<EditProfile />} />
 
-              {/* Protected Routes */}
+              {/* Protected User Dashboard */}
               <Route
                 path="/dashboard"
                 element={
@@ -49,6 +55,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Admin Pages */}
               <Route
                 path="/admin/dashboard"
                 element={
@@ -57,8 +65,24 @@ function App() {
                   </AdminRoute>
                 }
               />
+              <Route
+                path="/admin/products"
+                element={
+                  <AdminRoute>
+                    <ProductManagement />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/products/manage"
+                element={
+                  <AdminRoute>
+                    <ProductList />
+                  </AdminRoute>
+                }
+              />
 
-              {/* Fallback: Unauthorized */}
+              {/* Fallback Unauthorized */}
               <Route
                 path="/unauthorized"
                 element={
