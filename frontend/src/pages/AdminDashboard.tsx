@@ -1,11 +1,11 @@
 import {
-    ArrowLeft,
-    BarChart2,
-    BookOpenCheck,
-    FileText,
-    Package,
-    Settings,
-    UserCog,
+  ArrowLeft,
+  BarChart2,
+  BookOpenCheck,
+  FileText,
+  Package,
+  Settings,
+  UserCog,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -69,7 +69,7 @@ const AdminDashboard = () => {
     <>
       <Header />
 
-      <section className="relative min-h-[845px] px-4 py-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#f43f5e] via-[#d946ef] to-[#6366f1] text-white overflow-hidden">
+      <section className="relative min-h-[930px] px-4 py-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#f43f5e] via-[#d946ef] to-[#6366f1] text-white overflow-hidden">
         {/* Background Circles */}
         <div className="absolute top-[-100px] left-[-100px] w-[300px] h-[300px] bg-pink-300 rounded-full blur-[120px] opacity-20 animate-pulse" />
         <div className="absolute bottom-[-100px] right-[-100px] w-[300px] h-[300px] bg-yellow-300 rounded-full blur-[120px] opacity-20 animate-pulse" />
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
           {/* Heading */}
           <div className="mb-10 text-center">
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-white to-pink-100">
-              नमस्ते, एडमिन {user.full_name || user.username}
+              नमस्ते, एडमिन  {user.full_name || user.username}
             </h1>
             <p className="text-white/80 mt-2">
               प्रशासनिक कार्यहरू यहाँबाट व्यवस्थापन गर्नुहोस्।
