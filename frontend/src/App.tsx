@@ -20,6 +20,7 @@ import EditProfile from "./pages/DashboardFeatures/EditProfile";
 import UserDashboard from "./pages/UserDashboard";
 
 // Admin Pages
+import CategoryEdit from "./pages/AdminFeatures/CategoryEdit";
 import CategoryList from "./pages/AdminFeatures/CategoryList";
 import ProductEdit from "./pages/AdminFeatures/ProductEdit";
 import ProductList from "./pages/AdminFeatures/ProductList";
@@ -109,7 +110,32 @@ function App() {
                   </AdminRoute>
                 }
               />
-              {/* Fallback Unauthorized */}
+              // ...
+              <Route
+                path="/admin/categories/manage"
+                element={
+                  <AdminRoute>
+                    <CategoryList />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/categories/add"
+                element={
+                  <AdminRoute>
+                    <CategoryEdit />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/categories/edit/:id"
+                element={
+                  <AdminRoute>
+                    <CategoryEdit />
+                  </AdminRoute>
+                }
+              />
+                            {/* Fallback Unauthorized */}
               <Route
                 path="/unauthorized"
                 element={
