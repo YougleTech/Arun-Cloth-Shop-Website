@@ -34,6 +34,10 @@ export default function ProductEdit() {
   const [form, setForm] = useState<any>({});
   const [mainImage, setMainImage] = useState<File | null>(null);
 
+  // NEW: preview + current image states
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
+
   const authHeader = useMemo(
     () => (token ? { Authorization: `Bearer ${token}` } : {}),
     [token]
@@ -49,6 +53,10 @@ export default function ProductEdit() {
           const pRes = await axios.get(`/api/admin/products/${id}/`, { headers: authHeader });
           const p: ProductDetail = pRes.data;
           setProduct(p);
+
+          // NEW: remember current main image url (if any)
+          setCurrentImage(p.main_image || null);
+
           setForm({
             // Basic
             name: p.name ?? "",
@@ -121,6 +129,13 @@ export default function ProductEdit() {
     load();
   }, [id, authHeader]);
 
+  // NEW: cleanup preview URL when it changes/unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -144,10 +159,15 @@ export default function ProductEdit() {
     }));
   };
 
+  // UPDATED: image change with preview
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setMainImage(e.target.files[0]);
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setMainImage(file);
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   // Minimal client-side validation for required fields
@@ -215,18 +235,18 @@ export default function ProductEdit() {
       appendIfValid("colors_available", form.colors_available?.trim());
       appendIfValid("care_instructions", form.care_instructions?.trim());
 
-            if (form.price_per_meter === "" || form.price_per_meter === null) {
+      // keep your explicit NULL/empty behavior for prices
+      if (form.price_per_meter === "" || form.price_per_meter === null) {
         payload.append("price_per_meter", "");
-        } else if (!isNaN(parseFloat(form.price_per_meter))) {
+      } else if (!isNaN(parseFloat(form.price_per_meter))) {
         payload.append("price_per_meter", String(parseFloat(form.price_per_meter)));
-        }
+      }
 
-        if (form.wholesale_price === "" || form.wholesale_price === null) {
+      if (form.wholesale_price === "" || form.wholesale_price === null) {
         payload.append("wholesale_price", "");
-        } else if (!isNaN(parseFloat(form.wholesale_price))) {
+      } else if (!isNaN(parseFloat(form.wholesale_price))) {
         payload.append("wholesale_price", String(parseFloat(form.wholesale_price)));
-        }
-
+      }
 
       // Ensure these always go as integers
       appendIfValid(
@@ -247,19 +267,13 @@ export default function ProductEdit() {
       appendIfValid("meta_title", form.meta_title?.trim());
       appendIfValid("meta_description", form.meta_description?.trim());
 
-      // Optional image
-            if (mainImage) {
+      // Optional image (send only if user picked one)
+      if (mainImage) {
         payload.append("main_image", mainImage);
-        } else if (createMode) {
-        payload.append("main_image", ""); // backend can skip if empty
-        }
-        {mainImage && (
-        <img
-            src={URL.createObjectURL(mainImage)}
-            alt="Preview"
-            className="mt-2 w-32 h-32 object-cover rounded border border-white/30"
-        />
-        )}
+      } else if (createMode) {
+        // in create mode allow empty to be ignored by backend
+        payload.append("main_image", "");
+      }
 
       if (id) {
         await axios.patch(`/api/admin/products/${id}/`, payload, {
@@ -506,8 +520,39 @@ export default function ProductEdit() {
             <div className="md:col-span-2">
               <label className="block text-sm mb-1">Main Image (optional)</label>
               <input type="file" accept="image/*" onChange={handleImageChange} />
-              {product?.main_image && !mainImage && (
-                <p className="text-sm mt-1">Current: {product.main_image}</p>
+
+              {/* small preview */}
+              <div className="mt-2 flex items-center gap-3">
+                {(previewUrl || currentImage) ? (
+                  <img
+                    src={previewUrl || currentImage || undefined}
+                    alt="Preview"
+                    className="h-16 w-24 object-cover rounded border border-white/30 bg-white/10"
+                  />
+                ) : (
+                  <span className="text-xs text-white/70">No image selected</span>
+                )}
+
+                {previewUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (previewUrl) URL.revokeObjectURL(previewUrl);
+                      setPreviewUrl(null);
+                      setMainImage(null);
+                    }}
+                    className="px-2 py-1 rounded bg-white/20 border border-white/30 text-xs"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {/* show current url text if editing and no new file */}
+              {product?.main_image && !previewUrl && (
+                <p className="text-xs mt-1 opacity-80 break-all">
+                  Current: {product.main_image}
+                </p>
               )}
             </div>
 

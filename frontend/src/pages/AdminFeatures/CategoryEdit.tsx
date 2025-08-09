@@ -1,3 +1,4 @@
+// src/pages/AdminFeatures/CategoryEdit.tsx
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -6,13 +7,12 @@ import { useAuth } from "../../contexts/AuthContext";
 import type { Category } from "../../types";
 
 export default function CategoryEdit() {
-  const { id } = useParams();
+  const { id } = useParams();                // if present => edit mode
   const createMode = !id;
   const navigate = useNavigate();
 
-  const { state } = useAuth();
-  const { tokens, rehydrated, isAuthenticated } = state;
-  const token = tokens?.access;
+  const { state: authState } = useAuth();
+  const token = authState.tokens?.access;
 
   const authHeader = useMemo(
     () => (token ? { Authorization: `Bearer ${token}` } : {}),
@@ -23,26 +23,30 @@ export default function CategoryEdit() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState<Partial<Category> & { is_active?: boolean }>({
+  // form
+  const [form, setForm] = useState<{ name: string; description: string; is_active: boolean }>({
     name: "",
     description: "",
     is_active: true,
   });
+
+  // image handling
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string | null>(null); // from backend
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);     // Object URL for new file
 
+  // cleanup preview object URL on unmount/changes
   useEffect(() => {
-    if (!rehydrated) return;
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
-    if (!isAuthenticated || !token) {
-      setLoading(false);
-      setError("You are not authorized. Please log in.");
-      return;
-    }
-
+  // load data (edit mode)
+  useEffect(() => {
     const load = async () => {
       try {
-        if (id) {
+        if (!createMode) {
           const res = await axios.get(`/api/admin/categories/${id}/`, { headers: authHeader });
           const c: Category = res.data;
           setForm({
@@ -51,31 +55,33 @@ export default function CategoryEdit() {
             is_active: !!c.is_active,
           });
           setCurrentImage(c.image || null);
-        } else {
-          setForm({ name: "", description: "", is_active: true });
-          setCurrentImage(null);
         }
       } catch (e) {
         console.error(e);
-        setError("Failed to load category.");
+        setError("क्याटेगरी लोड हुन सकेन।");
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [id, authHeader, isAuthenticated, token, rehydrated]);
+  }, [id, createMode, authHeader]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type, checked } = e.target as any;
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
-  const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, is_active: e.target.checked }));
-  };
+
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImageFile(e.target.files[0]);
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+
+    // revoke previous preview first
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,36 +90,49 @@ export default function CategoryEdit() {
     setError(null);
 
     try {
-      if (!form.name || !form.name.trim()) {
+      // basic validation
+      if (!form.name.trim()) {
         setSaving(false);
-        return alert("Name is required.");
+        return alert("कृपया क्याटेगरीको नाम लेख्नुहोस्।");
       }
 
       const fd = new FormData();
       fd.append("name", form.name.trim());
-      if (form.description) fd.append("description", form.description.trim());
-      if (typeof form.is_active === "boolean") fd.append("is_active", form.is_active ? "true" : "false");
-      if (imageFile) fd.append("image", imageFile);
+      fd.append("description", form.description || "");
+      fd.append("is_active", form.is_active ? "true" : "false");
 
-      if (id) {
-        await axios.patch(`/api/admin/categories/${id}/`, fd, {
-          headers: { ...authHeader, "Content-Type": "multipart/form-data" },
-        });
-        alert("✅ Category updated.");
+      // attach new image if chosen
+      if (imageFile) {
+        fd.append("image", imageFile);
+      } else if (createMode) {
+        // nothing — image optional
       } else {
+        // edit mode but no new image chosen:
+        // if your backend expects omission to keep old image, do nothing
+        // if it expects explicit null to remove image, uncomment:
+        // fd.append("image", "");
+      }
+
+      if (createMode) {
         await axios.post(`/api/admin/categories/`, fd, {
           headers: { ...authHeader, "Content-Type": "multipart/form-data" },
         });
-        alert("✅ Category created.");
+        alert("✅ क्याटेगरी सिर्जना भयो।");
+      } else {
+        await axios.patch(`/api/admin/categories/${id}/`, fd, {
+          headers: { ...authHeader, "Content-Type": "multipart/form-data" },
+        });
+        alert("✅ क्याटेगरी अपडेट भयो।");
       }
+
       navigate("/admin/categories/manage");
     } catch (e: any) {
       console.error(e);
-      let msg = "Save failed.";
+      let msg = "सेभ गर्न सकेन। कृपया फाँटहरू जाँच गर्नुहोस्।";
       if (e?.response?.data) {
         try {
           msg = Object.entries(e.response.data as Record<string, string[]>)
-            .map(([field, errs]) => `${field}: ${(errs || []).join(", ")}`)
+            .map(([f, errs]) => `${f}: ${(errs || []).join(", ")}`)
             .join("\n");
         } catch {
           msg = e?.response?.data?.detail || msg;
@@ -126,11 +145,12 @@ export default function CategoryEdit() {
     }
   };
 
-  if (!rehydrated || loading) {
-    return <div className="text-center text-white py-10">📂 लोड हुँदैछ...</div>;
-  }
-  if (error) {
-    return <div className="text-center text-red-300 py-10">{error}</div>;
+  if (loading) {
+    return (
+      <section className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 text-white flex items-center justify-center">
+        <div>📂 लोड हुँदैछ...</div>
+      </section>
+    );
   }
 
   return (
@@ -139,25 +159,28 @@ export default function CategoryEdit() {
       <section className="min-h-screen px-4 py-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white">
         <div className="max-w-xl mx-auto bg-white/10 border border-white/20 backdrop-blur-lg rounded-2xl p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold">{id ? "✏️ Edit Category" : "➕ Add Category"}</h1>
+            <h1 className="text-2xl font-bold">
+              {createMode ? "➕ क्याटेगरी थप्नुहोस्" : "✏️ क्याटेगरी सम्पादन"}
+            </h1>
+            {error && <p className="mt-2 text-sm text-yellow-200 whitespace-pre-line">{error}</p>}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm mb-1">Name</label>
+              <label className="block text-sm mb-1">नाम</label>
               <input
                 name="name"
-                value={form.name || ""}
+                value={form.name}
                 onChange={handleChange}
                 className="w-full p-2 rounded bg-white text-gray-900 shadow focus:outline-none focus:ring-2 focus:ring-yellow-300"
               />
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Description</label>
+              <label className="block text-sm mb-1">विवरण</label>
               <textarea
                 name="description"
-                value={form.description || ""}
+                value={form.description}
                 onChange={handleChange}
                 className="w-full p-2 rounded bg-white text-gray-900 shadow focus:outline-none focus:ring-2 focus:ring-yellow-300"
               />
@@ -167,21 +190,46 @@ export default function CategoryEdit() {
               <input
                 id="is_active"
                 type="checkbox"
+                name="is_active"
                 checked={!!form.is_active}
-                onChange={handleToggle}
+                onChange={handleChange}
               />
               <label htmlFor="is_active" className="text-sm">Active</label>
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Image (optional)</label>
+              <label className="block text-sm mb-1">तस्बिर (optional)</label>
               <input type="file" accept="image/*" onChange={handleImage} />
-              {currentImage && !imageFile && (
-                <p className="text-sm mt-1">Current: {currentImage}</p>
-              )}
+
+              {/* small preview */}
+              <div className="mt-2 flex items-center gap-3">
+                {previewUrl || currentImage ? (
+                  <img
+                    src={previewUrl || currentImage || undefined}
+                    alt="Preview"
+                    className="h-16 w-24 object-cover rounded border border-white/30 bg-white/10"
+                  />
+                ) : (
+                  <span className="text-xs text-white/70">No image selected</span>
+                )}
+
+                {previewUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (previewUrl) URL.revokeObjectURL(previewUrl);
+                      setPreviewUrl(null);
+                      setImageFile(null);
+                    }}
+                    className="px-2 py-1 rounded bg-white/20 border border-white/30 text-xs"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 mt-2">
               <button
                 type="button"
                 onClick={() => navigate("/admin/categories/manage")}
@@ -194,7 +242,7 @@ export default function CategoryEdit() {
                 disabled={saving}
                 className="px-4 py-2 rounded bg-yellow-400 text-black font-semibold hover:bg-yellow-300"
               >
-                {saving ? "Saving..." : id ? "Save changes" : "Create category"}
+                {saving ? "Saving..." : createMode ? "Create" : "Save changes"}
               </button>
             </div>
           </form>
