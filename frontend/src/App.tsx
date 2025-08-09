@@ -20,6 +20,8 @@ import EditProfile from "./pages/DashboardFeatures/EditProfile";
 import UserDashboard from "./pages/UserDashboard";
 
 // Admin Pages
+import CategoryList from "./pages/AdminFeatures/CategoryList";
+import ProductEdit from "./pages/AdminFeatures/ProductEdit";
 import ProductList from "./pages/AdminFeatures/ProductList";
 import ProductManagement from "./pages/AdminFeatures/ProductManagement";
 // Route Guards
@@ -45,6 +47,8 @@ function App() {
               <Route path="/bulk-order" element={<BulkOrder />} />
               <Route path="/quick-order" element={<QuickOrder />} />
               <Route path="/profile" element={<EditProfile />} />
+              <Route path="/admin/products/add" element={<AdminRoute><ProductEdit /></AdminRoute>} />
+              <Route path="/admin/products/edit/:id" element={<AdminRoute><ProductEdit /></AdminRoute>} />
 
               {/* Protected User Dashboard */}
               <Route
@@ -81,7 +85,30 @@ function App() {
                   </AdminRoute>
                 }
               />
-
+              <Route
+                path="/admin/categories/manage"
+                element={
+                  <AdminRoute>
+                    <CategoryList />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/products/add"
+                element={
+                  <AdminRoute>
+                    <ProductEdit />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/products/edit/:id"
+                element={
+                  <AdminRoute>
+                    <ProductEdit />
+                  </AdminRoute>
+                }
+              />
               {/* Fallback Unauthorized */}
               <Route
                 path="/unauthorized"

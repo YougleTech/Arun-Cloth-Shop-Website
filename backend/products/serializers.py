@@ -104,7 +104,7 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             'material', 'gsm', 'width', 'colors_available', 'primary_color',
             'usage', 'care_instructions', 'price_per_meter', 'wholesale_price',
             'minimum_order_quantity', 'stock_quantity', 'is_available',
-            'is_featured', 'tags', 'meta_title', 'meta_description'
+            'is_featured', 'tags', 'meta_title', 'meta_description', 'main_image'
         ]
     
     def validate_slug(self, value):
@@ -136,3 +136,4 @@ class ProductReviewCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductReview
         fields = ['product', 'customer_name', 'customer_email', 'rating', 'review_text']
+        

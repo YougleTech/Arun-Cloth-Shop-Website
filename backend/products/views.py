@@ -195,6 +195,8 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
 
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import ProductImage
 
 class AdminProductViewSet(viewsets.ModelViewSet):
     """
@@ -208,6 +210,9 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'price_per_meter', 'created_at', 'stock_quantity']
     ordering = ['-created_at']
 
+    # 👇 Add this so DRF accepts file uploads (multipart/form-data)
+    parser_classes = [MultiPartParser, FormParser]
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return ProductCreateUpdateSerializer
@@ -215,8 +220,34 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             return ProductDetailSerializer
         return ProductListSerializer
 
+    def _maybe_save_primary_image(self, product, request):
+        """
+        If 'main_image' file is present in the request, save it as a primary ProductImage.
+        """
+        file = request.FILES.get('main_image')
+        if not file:
+            return
+
+        alt_text = request.data.get('alt_text') or product.name or ''
+        sort_order = 0
+
+        # Your ProductImage.save() already ensures only one primary per product.
+        ProductImage.objects.create(
+            product=product,
+            image=file,
+            alt_text=alt_text,
+            is_primary=True,
+            sort_order=sort_order,
+        )
+
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        instance = serializer.save(created_by=self.request.user)
+        self._maybe_save_primary_image(instance, self.request)
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        self._maybe_save_primary_image(instance, self.request)
+
 
 
 @api_view(['GET'])
