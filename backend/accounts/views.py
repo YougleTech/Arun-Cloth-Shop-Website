@@ -370,3 +370,22 @@ def check_availability(request):
         result['phone_available'] = not User.objects.filter(phone=phone).exists()
     
     return Response(result)
+
+# views.py
+from django.contrib.auth import get_user_model
+from rest_framework import viewsets, filters
+from rest_framework.permissions import IsAdminUser
+from .serializers import AdminUserSerializer
+
+User = get_user_model()
+
+class AdminUserViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for users - full CRUD
+    """
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["email", "username", "first_name", "last_name"]
+    ordering_fields = ["date_joined", "email", "username"]

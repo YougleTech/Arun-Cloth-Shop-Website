@@ -31,7 +31,9 @@ const AdminDashboard = () => {
       title: "प्रयोगकर्ता व्यवस्थापन",
       desc: "प्रयोगकर्ताहरू हेर्नुहोस्, सम्पादन गर्नुहोस् वा हटाउनुहोस्।",
       gradient: "from-pink-500 to-yellow-400",
+      link: "/admin/users",
     },
+
     {
       icon: <Package className="w-6 h-6" />,
       title: "उत्पादनहरू व्यवस्थापन",

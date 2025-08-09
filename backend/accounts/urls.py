@@ -7,6 +7,7 @@ from . import views
 router = DefaultRouter()
 router.register('profile', views.UserProfileViewSet, basename='profile')
 router.register('addresses', views.UserAddressViewSet, basename='addresses')
+router.register('admin/users', views.AdminUserViewSet, basename='admin-user')  # ✅ FIXED
 
 urlpatterns = [
     # Authentication
@@ -25,6 +26,6 @@ urlpatterns = [
     # Utility
     path('check-availability/', views.check_availability, name='check_availability'),
     
-    # Profile and addresses
+    # Profile, addresses, admin
     path('', include(router.urls)),
 ]

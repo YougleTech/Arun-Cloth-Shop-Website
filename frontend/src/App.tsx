@@ -25,6 +25,7 @@ import CategoryList from "./pages/AdminFeatures/CategoryList";
 import ProductEdit from "./pages/AdminFeatures/ProductEdit";
 import ProductList from "./pages/AdminFeatures/ProductList";
 import ProductManagement from "./pages/AdminFeatures/ProductManagement";
+import UserList from "./pages/AdminFeatures/UserList";
 // Route Guards
 import AdminRoute from "./routes/AdminRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -132,6 +133,14 @@ function App() {
                 element={
                   <AdminRoute>
                     <CategoryEdit />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <AdminRoute>
+                    <UserList />
                   </AdminRoute>
                 }
               />

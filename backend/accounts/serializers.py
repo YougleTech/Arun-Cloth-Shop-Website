@@ -200,3 +200,39 @@ class ResetPasswordSerializer(serializers.Serializer):
         if attrs['new_password'] != attrs['new_password_confirm']:
             raise serializers.ValidationError("पासवर्डहरू मेल खाँदैन।")
         return attrs
+    
+# serializers_user_admin.py
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
+
+User = get_user_model()
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id", "email", "username", "first_name", "last_name",
+            "is_active", "is_staff", "date_joined", "password",
+        ]
+        read_only_fields = ["date_joined"]
+
+    def create(self, validated_data):
+        pwd = validated_data.pop("password", None)
+        user = User(**validated_data)
+        if pwd:
+            user.set_password(pwd)
+        else:
+            user.set_unusable_password()
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        pwd = validated_data.pop("password", None)
+        for k, v in validated_data.items():
+            setattr(instance, k, v)
+        if pwd:
+            instance.set_password(pwd)
+        instance.save()
+        return instance
