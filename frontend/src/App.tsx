@@ -22,6 +22,7 @@ import UserDashboard from "./pages/UserDashboard";
 // Admin Pages
 import CategoryEdit from "./pages/AdminFeatures/CategoryEdit";
 import CategoryList from "./pages/AdminFeatures/CategoryList";
+import HeroSlides from "./pages/AdminFeatures/HeroSlides";
 import ProductEdit from "./pages/AdminFeatures/ProductEdit";
 import ProductList from "./pages/AdminFeatures/ProductList";
 import ProductManagement from "./pages/AdminFeatures/ProductManagement";
@@ -141,6 +142,14 @@ function App() {
                 element={
                   <AdminRoute>
                     <UserList />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/hero-slides"
+                element={
+                  <AdminRoute>
+                    <HeroSlides />
                   </AdminRoute>
                 }
               />

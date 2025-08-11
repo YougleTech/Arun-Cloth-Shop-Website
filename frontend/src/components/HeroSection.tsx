@@ -1,10 +1,22 @@
+import axios from "axios";
 import { ArrowRight, Play } from "lucide-react";
-
+import { useEffect, useMemo, useState } from "react";
+import "swiper/css";
+import "swiper/css/effect-fade";
 import { Autoplay, EffectFade } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
-// Image array
-const heroImages = [
+type Slide = {
+  id: string;
+  title: string;
+  subtitle: string;
+  button_text: string;
+  button_link: string;
+  image: string;      // absolute URL from backend
+  sort_order: number;
+};
+
+const FALLBACK_IMAGES = [
   "/images/banner (1).jpg",
   "/images/banner (2).jpg",
   "/images/banner (3).jpg",
@@ -13,6 +25,31 @@ const heroImages = [
 ];
 
 const HeroSection = () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8001";
+  const [slides, setSlides] = useState<Slide[] | null>(null);
+
+  const LIST_URL = "/api/hero-slides/";
+
+  const fetchSlides = useMemo(
+    () => async () => {
+      try {
+        const res = await axios.get(LIST_URL);
+        const data: Slide[] = Array.isArray(res.data) ? res.data : (res.data?.results ?? []);
+        setSlides(data);
+      } catch (e) {
+        console.error("Failed to load hero slides, using fallbacks.", e);
+        setSlides([]); // force fallback
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    fetchSlides();
+  }, [fetchSlides]);
+
+  const hasSlides = slides && slides.length > 0;
+
   return (
     <section className="relative min-h-[700px] flex items-center justify-center bg-gradient-to-br from-[#f43f5e] via-[#d946ef] to-[#6366f1] text-white overflow-hidden">
       {/* Decorative blobs */}
@@ -64,19 +101,21 @@ const HeroSection = () => {
           <Swiper
             modules={[Autoplay, EffectFade]}
             effect="fade"
-            autoplay={{ delay: 2000, disableOnInteraction: false }}
+            autoplay={{ delay: 2500, disableOnInteraction: false }}
             loop={true}
             className="w-full h-full"
           >
-            {heroImages.map((src, index) => (
-              <SwiperSlide key={index}>
-                <img
-                  src={src}
-                  alt={`Slide ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </SwiperSlide>
-            ))}
+            {hasSlides
+              ? slides!.map((s, i) => (
+                  <SwiperSlide key={s.id}>
+                    <img src={s.image} alt={s.title || `Slide ${i + 1}`} className="w-full h-full object-cover" />
+                  </SwiperSlide>
+                ))
+              : FALLBACK_IMAGES.map((src, i) => (
+                  <SwiperSlide key={i}>
+                    <img src={src} alt={`Slide ${i + 1}`} className="w-full h-full object-cover" />
+                  </SwiperSlide>
+                ))}
           </Swiper>
 
           {/* Badges */}

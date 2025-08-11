@@ -3,6 +3,7 @@ import {
   BarChart2,
   BookOpenCheck,
   FileText,
+  ImageIcon,
   Package,
   Settings,
   UserCog,
@@ -64,6 +65,13 @@ const AdminDashboard = () => {
       title: "सेटिङ्स",
       desc: "साइट सेटिङ्स र अनुमतिहरू समायोजन गर्नुहोस्।",
       gradient: "from-red-400 to-yellow-500",
+    },
+    {
+      icon: <ImageIcon className="w-6 h-6" />, // import { Image as ImageIcon } from "lucide-react"
+      title: "Hero Slides",
+      desc: "Homepage slider images (upload, order, toggle).",
+      gradient: "from-blue-500 to-cyan-400",
+      link: "/admin/hero-slides",
     },
   ];
 
