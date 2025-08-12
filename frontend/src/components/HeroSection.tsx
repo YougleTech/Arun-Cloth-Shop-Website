@@ -28,7 +28,7 @@ const HeroSection = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://arun.yougletech.com/";
   const [slides, setSlides] = useState<Slide[] | null>(null);
 
-  const LIST_URL = "/api/hero-slides/";
+  const LIST_URL = `${backendUrl}/api/hero-slides/`;
 
   const fetchSlides = useMemo(
     () => async () => {
