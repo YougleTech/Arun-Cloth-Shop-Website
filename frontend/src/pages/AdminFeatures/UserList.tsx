@@ -36,9 +36,9 @@ type Paginated<T> = {
 
 // ✅ Match UserDashboard route base
 const API_ORIGIN = import.meta.env.VITE_BACKEND_URL || "https://arun.yougletech.com/";
-const API_BASE = `${API_ORIGIN}api/accounts`;
+const API_BASE = `${API_ORIGIN}api/accounts/`;
 const LIST_URL = `${API_BASE}admin/users/`;
-const DETAIL_URL = (id: string) => `${API_BASE}/admin/users/${id}/`;
+const DETAIL_URL = (id: string) => `${API_BASE}admin/users/${id}/`;
 
 export default function UserList() {
   const { state: authState } = useAuth();
