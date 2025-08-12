@@ -7,7 +7,7 @@ import Header from "../../components/Header";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Product } from "../../types";
 
-const BASE_MEDIA_URL = "http://127.0.0.1:8001/";
+const BASE_MEDIA_URL = "https://arun.yougletech.com/";
 
 export default function ProductList() {
   const { state } = useAuth();

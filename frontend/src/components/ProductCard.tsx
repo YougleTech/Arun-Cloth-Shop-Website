@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
 import type { Product } from "../types";
-const BASE_MEDIA_URL = "http://127.0.0.1:8001/"
+const BASE_MEDIA_URL = "https://arun.yougletech.com/";
 interface ProductCardProps {
   product: Product;
   viewMode?: "grid" | "list";
