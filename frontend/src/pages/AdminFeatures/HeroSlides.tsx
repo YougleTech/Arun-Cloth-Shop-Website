@@ -14,9 +14,9 @@ type Slide = {
   is_active?: boolean;
   sort_order: number;
 };
-
-const LIST_URL = "/api/admin/hero-slides/";
-const PUBLIC_URL = "/api/hero-slides/";
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://arun.yougletech.com/";
+const LIST_URL = `${backendUrl}api/admin/hero-slides/`;
+const PUBLIC_URL = `${backendUrl}api/hero-slides/`;
 
 export default function HeroSlides() {
   const { state: authState } = useAuth();
