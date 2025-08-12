@@ -28,7 +28,7 @@ export default function ProductList() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`/api/admin/products/`, { headers: authHeader });
+      const res = await axios.get(`api/admin/products/`, { headers: authHeader });
       setProducts(res.data.results || res.data || []);
     } catch (err: any) {
       console.error(err);
