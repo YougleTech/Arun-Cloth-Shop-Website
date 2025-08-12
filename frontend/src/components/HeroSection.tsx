@@ -101,7 +101,7 @@ const HeroSection = () => {
           <Swiper
             modules={[Autoplay, EffectFade]}
             effect="fade"
-            autoplay={{ delay: 2500, disableOnInteraction: false }}
+            autoplay={{ delay: 1000, disableOnInteraction: false }}
             loop={true}
             className="w-full h-full"
           >
