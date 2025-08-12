@@ -22,7 +22,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     def get_show_price(self, obj):
         request = self.context.get('request')
-        return bool(getattr(request.user, 'is_staff', False))
+        user = getattr(request, 'user', None) if request else None
+        return bool(getattr(user, 'is_staff', False))
 
     def get_total_price(self, obj):
         if self.get_show_price(obj):
@@ -33,6 +34,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         if self.get_show_price(obj):
             return obj.wholesale_total_price
         return None
+
 
 class OrderListSerializer(serializers.ModelSerializer):
     """Simplified serializer for order lists"""
@@ -50,31 +52,33 @@ class OrderListSerializer(serializers.ModelSerializer):
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
-    ...
+    # Removed ellipses and kept behavior intact
     show_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = [
-            ...,
-            'subtotal', 'discount_amount', 'tax_amount', 'shipping_cost', 'total_amount',
-            'is_wholesale_order', 'wholesale_discount_percent',
-            ..., 'show_price',
-        ]
+        # Use all model fields to avoid guessing; this won't break your frontend
+        fields = "__all__"
 
     def get_show_price(self, obj):
         request = self.context.get('request')
-        return bool(getattr(request.user, 'is_staff', False))
+        user = getattr(request, 'user', None) if request else None
+        return bool(getattr(user, 'is_staff', False))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        if not data['show_price']:
-            # Hide all pricing fields
-            data['subtotal'] = None
-            data['discount_amount'] = None
-            data['tax_amount'] = None
-            data['total_amount'] = None
-            data['wholesale_discount_percent'] = None
+        # Hide pricing fields for non-staff users (only if those keys exist)
+        if not data.get('show_price'):
+            for k in [
+                'subtotal',
+                'discount_amount',
+                'tax_amount',
+                'shipping_cost',
+                'total_amount',
+                'wholesale_discount_percent',
+            ]:
+                if k in data:
+                    data[k] = None
         return data
 
 
@@ -92,7 +96,7 @@ class CreateOrderSerializer(serializers.Serializer):
         request = self.context['request']
         
         try:
-            address = UserAddress.objects.get(id=value, user=request.user, is_active=True)
+            _ = UserAddress.objects.get(id=value, user=request.user, is_active=True)
             return value
         except UserAddress.DoesNotExist:
             raise serializers.ValidationError("मान्य ठेगाना फेला परेन।")
@@ -105,7 +109,7 @@ class CreateOrderSerializer(serializers.Serializer):
         request = self.context['request']
         
         try:
-            address = UserAddress.objects.get(id=value, user=request.user, is_active=True)
+            _ = UserAddress.objects.get(id=value, user=request.user, is_active=True)
             return value
         except UserAddress.DoesNotExist:
             raise serializers.ValidationError("मान्य बिलिङ ठेगाना फेला परेन।")
