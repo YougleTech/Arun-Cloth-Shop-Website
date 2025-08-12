@@ -117,7 +117,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001/api';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://arun.yougletech.com/api';
 
 class AuthService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

@@ -1,16 +1,16 @@
 import {
-    ArrowRight,
-    BadgeCheck,
-    Briefcase,
-    Building2 as Building,
-    Mail,
-    Map,
-    MapPin,
-    Phone,
-    Settings,
-    ShieldCheck,
-    User,
-    UserCircle
+  ArrowRight,
+  BadgeCheck,
+  Briefcase,
+  Building2 as Building,
+  Mail,
+  Map,
+  MapPin,
+  Phone,
+  Settings,
+  ShieldCheck,
+  User,
+  UserCircle
 } from "lucide-react";
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const user = authState.user;
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8001";
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://arun.yougletech.com/";
 
   useEffect(() => {
     if (!authState.isAuthenticated) {

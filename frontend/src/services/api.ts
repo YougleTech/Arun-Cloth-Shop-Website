@@ -1,15 +1,15 @@
 import type {
   Category,
+  DashboardStats,
+  FilterOptions,
+  PaginatedResponse,
   Product,
   ProductDetail,
   ProductReview,
-  FilterOptions,
-  SearchResults,
-  PaginatedResponse,
-  DashboardStats
+  SearchResults
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001/api';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://arun.yougletech.com/api';
 
 class ApiService {
   private async request<T>(

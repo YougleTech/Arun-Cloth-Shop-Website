@@ -46,7 +46,7 @@ const EditProfile = () => {
     });
 
     if (user.profile_image) {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8001";
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://arun.yougletech.com/";
         setImagePreview(`${backendUrl}${user.profile_image}`);
     }
     }, [user]);

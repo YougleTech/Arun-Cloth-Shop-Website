@@ -25,7 +25,7 @@ const FALLBACK_IMAGES = [
 ];
 
 const HeroSection = () => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8001";
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://arun.yougletech.com/";
   const [slides, setSlides] = useState<Slide[] | null>(null);
 
   const LIST_URL = "/api/hero-slides/";
