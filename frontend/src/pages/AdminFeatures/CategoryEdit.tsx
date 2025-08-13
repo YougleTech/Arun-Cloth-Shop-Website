@@ -6,8 +6,19 @@ import Header from "../../components/Header";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Category } from "../../types";
 
+const BASE_API_URL = "https://arun.yougletech.com/api/";
+const BASE_MEDIA_URL = "https://arun.yougletech.com/";
+
+// helper to fix relative paths
+const toAbsoluteUrl = (url?: string | null) => {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/")) return `${BASE_MEDIA_URL}${url.slice(1)}`;
+  return `${BASE_MEDIA_URL}${url}`;
+};
+
 export default function CategoryEdit() {
-  const { id } = useParams();                // if present => edit mode
+  const { id } = useParams();
   const createMode = !id;
   const navigate = useNavigate();
 
@@ -23,38 +34,36 @@ export default function CategoryEdit() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // form
   const [form, setForm] = useState<{ name: string; description: string; is_active: boolean }>({
     name: "",
     description: "",
     is_active: true,
   });
 
-  // image handling
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [currentImage, setCurrentImage] = useState<string | null>(null); // from backend
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);     // Object URL for new file
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // cleanup preview object URL on unmount/changes
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
-  // load data (edit mode)
   useEffect(() => {
     const load = async () => {
       try {
         if (!createMode) {
-          const res = await axios.get(`/api/admin/categories/${id}/`, { headers: authHeader });
+          const res = await axios.get(`${BASE_API_URL}admin/categories/${id}/`, {
+            headers: authHeader,
+          });
           const c: Category = res.data;
           setForm({
             name: c.name || "",
             description: c.description || "",
             is_active: !!c.is_active,
           });
-          setCurrentImage(c.image || null);
+          setCurrentImage(c.image ? toAbsoluteUrl(c.image) : null);
         }
       } catch (e) {
         console.error(e);
@@ -66,9 +75,7 @@ export default function CategoryEdit() {
     load();
   }, [id, createMode, authHeader]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type, checked } = e.target as any;
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
@@ -76,10 +83,7 @@ export default function CategoryEdit() {
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setImageFile(file);
-
-    // revoke previous preview first
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(file));
   };
@@ -90,7 +94,6 @@ export default function CategoryEdit() {
     setError(null);
 
     try {
-      // basic validation
       if (!form.name.trim()) {
         setSaving(false);
         return alert("कृपया क्याटेगरीको नाम लेख्नुहोस्।");
@@ -101,25 +104,17 @@ export default function CategoryEdit() {
       fd.append("description", form.description || "");
       fd.append("is_active", form.is_active ? "true" : "false");
 
-      // attach new image if chosen
       if (imageFile) {
         fd.append("image", imageFile);
-      } else if (createMode) {
-        // nothing — image optional
-      } else {
-        // edit mode but no new image chosen:
-        // if your backend expects omission to keep old image, do nothing
-        // if it expects explicit null to remove image, uncomment:
-        // fd.append("image", "");
       }
 
       if (createMode) {
-        await axios.post(`/api/admin/categories/`, fd, {
+        await axios.post(`${BASE_API_URL}admin/categories/`, fd, {
           headers: { ...authHeader, "Content-Type": "multipart/form-data" },
         });
         alert("✅ क्याटेगरी सिर्जना भयो।");
       } else {
-        await axios.patch(`/api/admin/categories/${id}/`, fd, {
+        await axios.patch(`${BASE_API_URL}admin/categories/${id}/`, fd, {
           headers: { ...authHeader, "Content-Type": "multipart/form-data" },
         });
         alert("✅ क्याटेगरी अपडेट भयो।");
@@ -200,8 +195,6 @@ export default function CategoryEdit() {
             <div>
               <label className="block text-sm mb-1">तस्बिर (optional)</label>
               <input type="file" accept="image/*" onChange={handleImage} />
-
-              {/* small preview */}
               <div className="mt-2 flex items-center gap-3">
                 {previewUrl || currentImage ? (
                   <img
@@ -212,7 +205,6 @@ export default function CategoryEdit() {
                 ) : (
                   <span className="text-xs text-white/70">No image selected</span>
                 )}
-
                 {previewUrl && (
                   <button
                     type="button"

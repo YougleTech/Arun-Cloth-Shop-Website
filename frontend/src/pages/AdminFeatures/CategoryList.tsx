@@ -1,3 +1,4 @@
+// src/pages/AdminFeatures/CategoryList.tsx
 import axios from "axios";
 import { Image as ImageIcon, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -5,6 +6,19 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Category } from "../../types";
+
+const BASE_API_URL = "https://arun.yougletech.com/api/";
+const BASE_MEDIA_URL = "https://arun.yougletech.com/";
+
+// Make relative media paths absolute
+const toAbsoluteUrl = (url?: string | null) => {
+  if (!url) return null;
+  // already absolute
+  if (/^https?:\/\//i.test(url)) return url;
+  // ensure no double slash when concatenating
+  if (url.startsWith("/")) return `${BASE_MEDIA_URL}${url.slice(1)}`;
+  return `${BASE_MEDIA_URL}${url}`;
+};
 
 export default function CategoryList() {
   const { state } = useAuth();
@@ -30,11 +44,17 @@ export default function CategoryList() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(`/api/admin/categories/`, { headers: authHeader });
+      const res = await axios.get(`${BASE_API_URL}admin/categories/`, {
+        headers: authHeader,
+      });
       setCategories(normalize(res.data));
     } catch (err: any) {
       console.error(err);
-      setError(err?.response?.status === 401 ? "You are not authorized." : "क्याटेगरी ल्याउन असफल भयो।");
+      setError(
+        err?.response?.status === 401
+          ? "You are not authorized."
+          : "क्याटेगरी ल्याउन असफल भयो।"
+      );
     } finally {
       setLoading(false);
     }
@@ -57,7 +77,9 @@ export default function CategoryList() {
     if (!ok) return;
     try {
       setDeletingId(id);
-      await axios.delete(`/api/admin/categories/${id}/`, { headers: authHeader });
+      await axios.delete(`${BASE_API_URL}admin/categories/${id}/`, {
+        headers: authHeader,
+      });
       setCategories((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       console.error(err);
@@ -105,62 +127,74 @@ export default function CategoryList() {
 
           {/* Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className="relative bg-white/10 border border-white/20 backdrop-blur-lg rounded-xl p-6 shadow-md hover:shadow-xl transition-transform hover:scale-105 overflow-hidden"
-              >
-                {/* Image */}
-                <div className="w-full h-40 rounded-lg overflow-hidden mb-4 border border-white/20 bg-white/10 flex items-center justify-center">
-                  {cat.image ? (
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-white/70 flex flex-col items-center justify-center">
-                      <ImageIcon className="w-8 h-8 mb-1" />
-                      <span className="text-xs">No image</span>
-                    </div>
-                  )}
+            {Array.isArray(categories) && categories.length > 0 ? (
+              categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="relative bg-white/10 border border-white/20 backdrop-blur-lg rounded-xl p-6 shadow-md hover:shadow-xl transition-transform hover:scale-105 overflow-hidden"
+                >
+                  {/* Image */}
+                  <div className="w-full h-40 rounded-lg overflow-hidden mb-4 border border-white/20 bg-white/10 flex items-center justify-center">
+                    {cat.image ? (
+                      <img
+                        src={toAbsoluteUrl(cat.image) || undefined}
+                        alt={cat.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-white/70 flex flex-col items-center justify-center">
+                        <ImageIcon className="w-8 h-8 mb-1" />
+                        <span className="text-xs">No image</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-xl font-semibold mb-1">{cat.name}</h3>
+                  <p className="text-sm text-white/70 line-clamp-2 mb-3">
+                    {cat.description || "—"}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2 text-sm mb-4">
+                    <span className="bg-green-400/20 text-green-200 px-2 py-1 rounded-full">
+                      {cat.products_count} products
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded-full ${
+                        cat.is_active
+                          ? "bg-emerald-400/20 text-emerald-200"
+                          : "bg-red-400/20 text-red-200"
+                      }`}
+                    >
+                      {cat.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => navigate(`/admin/categories/edit/${cat.id}`)}
+                      className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-yellow-300 text-black font-semibold hover:bg-yellow-200 transition"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      सम्पादन
+                    </button>
+                    <button
+                      onClick={() => handleDelete(cat.id)}
+                      disabled={deletingId === cat.id}
+                      className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-400 transition disabled:opacity-60"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {deletingId === cat.id ? "Deleting..." : "मेटाउनुहोस्"}
+                    </button>
+                  </div>
+
+                  <div className="pointer-events-none absolute inset-0 rounded-xl border border-white/20" />
                 </div>
-
-                {/* Content */}
-                <h3 className="text-xl font-semibold mb-1">{cat.name}</h3>
-                <p className="text-sm text-white/70 line-clamp-2 mb-3">{cat.description || "—"}</p>
-
-                <div className="flex flex-wrap items-center gap-2 text-sm mb-4">
-                  <span className="bg-green-400/20 text-green-200 px-2 py-1 rounded-full">
-                    {cat.products_count} products
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded-full ${
-                      cat.is_active ? "bg-emerald-400/20 text-emerald-200" : "bg-red-400/20 text-red-200"
-                    }`}
-                  >
-                    {cat.is_active ? "Active" : "Inactive"}
-                  </span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => navigate(`/admin/categories/edit/${cat.id}`)}
-                    className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-yellow-300 text-black font-semibold hover:bg-yellow-200 transition"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    सम्पादन
-                  </button>
-                  <button
-                    onClick={() => handleDelete(cat.id)}
-                    disabled={deletingId === cat.id}
-                    className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-400 transition disabled:opacity-60"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {deletingId === cat.id ? "Deleting..." : "मेटाउनुहोस्"}
-                  </button>
-                </div>
-
-                <div className="pointer-events-none absolute inset-0 rounded-xl border border-white/20" />
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-center text-white/80 col-span-full">No categories found.</p>
+            )}
           </div>
         </div>
       </section>
