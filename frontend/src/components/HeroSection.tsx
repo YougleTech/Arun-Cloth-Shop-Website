@@ -51,7 +51,11 @@ const HeroSection = () => {
   const hasSlides = slides && slides.length > 0;
 
   return (
-    <section className="relative min-h-[700px] flex items-center justify-center bg-gradient-to-br from-[#f43f5e] via-[#d946ef] to-[#6366f1] text-white overflow-hidden">
+    <section
+  className="relative min-h-[800px] flex items-center justify-center 
+             bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800 
+             text-white overflow-hidden"
+>
       {/* Decorative blobs */}
       <div className="absolute top-[-80px] left-[-80px] w-[300px] h-[300px] bg-yellow-400 rounded-full blur-[100px] opacity-30 animate-pulse"></div>
       <div className="absolute bottom-[-100px] right-[-100px] w-[300px] h-[300px] bg-blue-500 rounded-full blur-[100px] opacity-20 animate-pulse"></div>

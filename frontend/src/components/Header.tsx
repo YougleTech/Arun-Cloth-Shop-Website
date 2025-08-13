@@ -155,7 +155,10 @@ const Header = () => {
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="md:hidden px-4 pb-4 pt-2 bg-white/10 backdrop-blur border-t border-white/10">
+        <div className="md:hidden px-4 pb-4 pt-2 bg-gradient-to-br from-pink-500/10 via-purple-600/10 to-purple-800/10 backdrop-blur border-t border-white/10">
+  {/* content */}
+
+
           <nav className="flex flex-col space-y-4 text-white">
             {navItems.map((item, idx) => {
               const LinkComponent = item.isHash ? HashLink : Link;

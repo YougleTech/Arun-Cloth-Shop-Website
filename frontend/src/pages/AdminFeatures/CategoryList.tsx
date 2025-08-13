@@ -108,7 +108,11 @@ export default function CategoryList() {
   return (
     <>
       <Header />
-      <section className="min-h-screen px-4 py-16 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 text-white">
+      <section
+  className="min-h-screen px-4 py-16 
+             bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800 
+             text-white"
+>
         <div className="max-w-6xl mx-auto">
           {/* Page Header */}
           <div className="mb-10 flex items-center justify-between">

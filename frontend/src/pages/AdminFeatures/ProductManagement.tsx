@@ -9,7 +9,11 @@ const ProductManagement = () => {
     <>
       <Header />
 
-      <section className="min-h-[93vh] px-4 py-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white flex flex-col items-center justify-center">
+      <section
+  className="min-h-[93vh] px-4 py-16 
+             bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800 
+             text-white flex flex-col items-center justify-center"
+>
         <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-10 shadow-2xl max-w-3xl w-full text-center space-y-6">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-white to-pink-100">
             उत्पादन व्यवस्थापन पृष्ठ

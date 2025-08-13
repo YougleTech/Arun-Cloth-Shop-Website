@@ -40,7 +40,11 @@ const UserDashboard = () => {
     <>
       <Header />
 
-      <section className="relative min-h-[600px] px-4 py-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#f43f5e] via-[#d946ef] to-[#6366f1] text-white overflow-hidden">
+     <section
+  className="relative min-h-[600px] px-4 py-16 flex flex-col items-center justify-center 
+             bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800 
+             text-white overflow-hidden"
+>
         {/* Background Blobs */}
         <div className="absolute top-[-100px] left-[-100px] w-[300px] h-[300px] bg-yellow-400 rounded-full blur-[120px] opacity-30 animate-pulse" />
         <div className="absolute bottom-[-120px] right-[-100px] w-[300px] h-[300px] bg-blue-500 rounded-full blur-[120px] opacity-20 animate-pulse" />

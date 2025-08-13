@@ -240,7 +240,11 @@ export default function UserList() {
   return (
     <>
       <Header />
-      <section className="min-h-screen px-4 py-16 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 text-white">
+      <section
+  className="min-h-screen px-4 py-16 
+             bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800 
+             text-white"
+>
         <div className="max-w-6xl mx-auto">
           {/* Title row */}
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

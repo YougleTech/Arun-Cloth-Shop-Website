@@ -5,13 +5,13 @@ import Header from "../components/Header";
 import HeroSection from "../components/HeroSection";
 
 const Home = () => (
-  <>
+  <div className="theme-gradient min-h-screen">
     <Header />
     <HeroSection />
     <CategoriesSection />
     <FeaturesSection />
-    <Footer/>
-  </>
+    <Footer />
+  </div>
 );
 
 export default Home;
