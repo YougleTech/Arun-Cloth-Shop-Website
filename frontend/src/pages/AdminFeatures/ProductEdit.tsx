@@ -6,6 +6,8 @@ import Header from "../../components/Header";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Category, ProductDetail } from "../../types";
 
+const BASE_API_URL = "https://arun.yougletech.com/api/";
+
 const MATERIALS = [
   "cotton","silk","wool","polyester","linen","rayon","chiffon","georgette","crepe",
   "denim","lycra","net","satin","velvet","khadi","other",
@@ -34,7 +36,7 @@ export default function ProductEdit() {
   const [form, setForm] = useState<any>({});
   const [mainImage, setMainImage] = useState<File | null>(null);
 
-  // NEW: preview + current image states
+  // Preview image states
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
 
@@ -46,26 +48,23 @@ export default function ProductEdit() {
   useEffect(() => {
     const load = async () => {
       try {
-        const cRes = await axios.get(`/api/admin/categories/`, { headers: authHeader });
+        // Fetch categories
+        const cRes = await axios.get(`${BASE_API_URL}admin/categories/`, { headers: authHeader });
         setCategories(cRes.data.results ?? cRes.data);
 
         if (id) {
-          const pRes = await axios.get(`/api/admin/products/${id}/`, { headers: authHeader });
+          // Fetch product details
+          const pRes = await axios.get(`${BASE_API_URL}admin/products/${id}/`, { headers: authHeader });
           const p: ProductDetail = pRes.data;
           setProduct(p);
-
-          // NEW: remember current main image url (if any)
           setCurrentImage(p.main_image || null);
 
           setForm({
-            // Basic
             name: p.name ?? "",
             slug: p.slug ?? "",
             short_description: p.short_description ?? "",
             description: p.description ?? "",
             category: p.category?.id ?? "",
-
-            // Specs
             material: p.material ?? "",
             gsm: p.gsm ?? "",
             width: p.width ?? "",
@@ -73,31 +72,24 @@ export default function ProductEdit() {
             colors_available: p.colors_available ?? "",
             usage: p.usage ?? "",
             care_instructions: p.care_instructions ?? "",
-
-            // Pricing & stock
             price_per_meter: p.price_per_meter ?? "",
             wholesale_price: p.wholesale_price ?? "",
             minimum_order_quantity: p.minimum_order_quantity ?? 1,
             stock_quantity: p.stock_quantity ?? 0,
-
-            // Flags & tags
             is_available: p.is_available ?? true,
             is_featured: p.is_featured ?? false,
             tags: p.tags ?? "",
-
-            // SEO
             meta_title: p.meta_title ?? "",
             meta_description: p.meta_description ?? "",
           });
         } else {
-          // Create defaults (leave empty; submit will skip empties)
+          // Defaults for create
           setForm({
             name: "",
             slug: "",
             short_description: "",
             description: "",
             category: "",
-
             material: "",
             gsm: "",
             width: "",
@@ -105,16 +97,13 @@ export default function ProductEdit() {
             colors_available: "",
             usage: "",
             care_instructions: "",
-
             price_per_meter: "",
             wholesale_price: "",
             minimum_order_quantity: 1,
             stock_quantity: 0,
-
             is_available: true,
             is_featured: false,
             tags: "",
-
             meta_title: "",
             meta_description: "",
           });
@@ -129,23 +118,17 @@ export default function ProductEdit() {
     load();
   }, [id, authHeader]);
 
-  // NEW: cleanup preview URL when it changes/unmounts
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type, checked } = e.target as any;
 
-    // Optional: auto-generate slug once if user hasn't typed it
     if (name === "name" && (!form.slug || form.slug.trim() === "")) {
-      const auto = value
-        .toLowerCase()
-        .trim()
+      const auto = value.toLowerCase().trim()
         .replace(/[^a-z0-9\s-]/g, "")
         .replace(/\s+/g, "-")
         .replace(/-+/g, "-");
@@ -159,30 +142,25 @@ export default function ProductEdit() {
     }));
   };
 
-  // UPDATED: image change with preview
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setMainImage(file);
-
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  // Minimal client-side validation for required fields
   const validateRequired = () => {
     const errs: string[] = [];
     if (!form.name?.trim()) errs.push("name is required");
     if (!form.slug?.trim()) errs.push("slug is required");
-    if (!form.category?.trim()) errs.push("category is required (UUID)");
+    if (!form.category?.trim()) errs.push("category is required");
     if (!MATERIALS.includes(form.material)) errs.push("material is required (valid choice)");
-    if (!form.gsm || isNaN(parseInt(form.gsm, 10))) errs.push("gsm must be a valid integer");
+    if (!form.gsm || isNaN(parseInt(form.gsm, 10))) errs.push("gsm must be a number");
     if (!form.width?.trim()) errs.push("width is required");
     if (!form.colors_available?.trim()) errs.push("colors_available is required");
     if (!form.primary_color?.trim()) errs.push("primary_color is required");
     if (!USAGES.includes(form.usage)) errs.push("usage is required (valid choice)");
-    // prices are optional; if present, they must be numbers & wholesale<=price enforced by backend
     if (errs.length) {
       setError(errs.join("\n"));
       alert(`❌ Please fix:\n${errs.map(e => `• ${e}`).join("\n")}`);
@@ -197,91 +175,34 @@ export default function ProductEdit() {
     setError(null);
 
     try {
-      // Prevent obvious 400s early
       if (!validateRequired()) {
         setSaving(false);
         return;
       }
 
       const payload = new FormData();
-
-      // Append helper – skip "", null, undefined
       const appendIfValid = (key: string, value: any) => {
         if (value === "" || value === undefined || value === null) return;
         payload.append(key, value);
       };
 
-      // Basic
-      appendIfValid("name", form.name?.trim());
-      appendIfValid("slug", form.slug?.trim());
-      appendIfValid("short_description", form.short_description?.trim());
-      appendIfValid("description", form.description?.trim());
+      Object.entries(form).forEach(([key, value]) => {
+        appendIfValid(key, value);
+      });
 
-      // Category (UUID string)
-      if (form.category && typeof form.category === "string") {
-        appendIfValid("category", form.category);
-      }
-
-      // Choices (send only if valid)
-      if (MATERIALS.includes(form.material)) appendIfValid("material", form.material);
-      if (USAGES.includes(form.usage)) appendIfValid("usage", form.usage);
-
-      // Specs & numeric conversions
-      if (form.gsm !== "" && !isNaN(parseInt(form.gsm, 10))) {
-        appendIfValid("gsm", String(parseInt(form.gsm, 10)));
-      }
-      appendIfValid("width", form.width?.trim());
-      appendIfValid("primary_color", form.primary_color?.trim());
-      appendIfValid("colors_available", form.colors_available?.trim());
-      appendIfValid("care_instructions", form.care_instructions?.trim());
-
-      // keep your explicit NULL/empty behavior for prices
-      if (form.price_per_meter === "" || form.price_per_meter === null) {
-        payload.append("price_per_meter", "");
-      } else if (!isNaN(parseFloat(form.price_per_meter))) {
-        payload.append("price_per_meter", String(parseFloat(form.price_per_meter)));
-      }
-
-      if (form.wholesale_price === "" || form.wholesale_price === null) {
-        payload.append("wholesale_price", "");
-      } else if (!isNaN(parseFloat(form.wholesale_price))) {
-        payload.append("wholesale_price", String(parseFloat(form.wholesale_price)));
-      }
-
-      // Ensure these always go as integers
-      appendIfValid(
-        "minimum_order_quantity",
-        String(parseInt(form.minimum_order_quantity || 1, 10))
-      );
-      appendIfValid(
-        "stock_quantity",
-        String(parseInt(form.stock_quantity || 0, 10))
-      );
-
-      // Flags
-      payload.append("is_available", form.is_available ? "true" : "false");
-      payload.append("is_featured", form.is_featured ? "true" : "false");
-
-      // Tags & SEO
-      if (form.tags) appendIfValid("tags", form.tags);
-      appendIfValid("meta_title", form.meta_title?.trim());
-      appendIfValid("meta_description", form.meta_description?.trim());
-
-      // Optional image (send only if user picked one)
       if (mainImage) {
         payload.append("main_image", mainImage);
       } else if (createMode) {
-        // in create mode allow empty to be ignored by backend
         payload.append("main_image", "");
       }
 
       if (id) {
-        await axios.patch(`/api/admin/products/${id}/`, payload, {
+        await axios.patch(`${BASE_API_URL}admin/products/${id}/`, payload, {
           headers: { ...authHeader, "Content-Type": "multipart/form-data" },
         });
         alert("✅ Product updated successfully.");
       } else {
-        await axios.post(`/api/admin/products/`, payload, {
+        await axios.post(`${BASE_API_URL}admin/products/`, payload, {
           headers: { ...authHeader, "Content-Type": "multipart/form-data" },
         });
         alert("✅ Product created successfully.");
@@ -290,7 +211,7 @@ export default function ProductEdit() {
       navigate("/admin/products/manage");
     } catch (e: any) {
       console.error(e);
-      let msg = "Save failed. Please check the fields.";
+      let msg = "Save failed.";
       if (e?.response?.data) {
         try {
           msg = Object.entries(e.response.data as Record<string, string[]>)
@@ -308,10 +229,6 @@ export default function ProductEdit() {
   };
 
   if (loading) return <div className="text-center text-white py-10">📦 लोड हुँदैछ...</div>;
-  if (error && !saving) {
-    // show load-time/validation errors above the form
-    // (submit-time errors will also alert)
-  }
   if (!createMode && !product) return null;
 
   return (
