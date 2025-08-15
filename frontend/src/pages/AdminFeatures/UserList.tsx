@@ -241,10 +241,10 @@ export default function UserList() {
     <>
       <Header />
       <section
-  className="min-h-screen px-4 py-16 
+        className="min-h-screen px-4 py-16 
              bg-gradient-to-br from-pink-500 via-purple-600 to-purple-800 
              text-white"
->
+      >
         <div className="max-w-6xl mx-auto">
           {/* Title row */}
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -362,12 +362,40 @@ export default function UserList() {
             </>
           )}
         </div>
-        {/* Drawer / Modal */}
+
+        {/* Bottom Sheet (mobile) / Centered Modal (desktop) */}
         {showForm && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-lg bg-white/10 border border-white/20 rounded-2xl p-6 text-white">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4"
+            role="dialog"
+            aria-modal="true"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setShowForm(false);
+            }}
+          >
+            {/* click outside to close */}
+            <button
+              aria-label="Close"
+              className="absolute inset-0 cursor-default"
+              onClick={(e) => {
+                // prevent closing when clicking inside the sheet
+                if (e.target === e.currentTarget) setShowForm(false);
+              }}
+            />
+            <div
+              className="
+                w-full sm:max-w-lg 
+                bg-white/10 border border-white/20 
+                rounded-t-2xl sm:rounded-2xl 
+                text-white 
+                shadow-2xl
+                overflow-hidden
+                translate-y-0
+              "
+            >
+              {/* Header (sticky in mobile for quick close) */}
+              <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-white/10 backdrop-blur border-b border-white/20">
+                <h2 className="text-lg font-semibold">
                   {editing ? "प्रयोगकर्ता सम्पादन" : "नयाँ प्रयोगकर्ता"}
                 </h2>
                 <button
@@ -377,9 +405,11 @@ export default function UserList() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              {/* Body (scrollable on mobile) */}
               <form
                 onSubmit={submit}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[75vh] sm:max-h-none overflow-y-auto"
               >
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">Email</label>
@@ -387,7 +417,7 @@ export default function UserList() {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    className="w-full p-2 rounded bg-white text-gray-900"
+                    className="w-full p-3 rounded-lg bg-white text-gray-900"
                     type="email"
                     required
                   />
@@ -398,7 +428,7 @@ export default function UserList() {
                     name="username"
                     value={form.username}
                     onChange={handleChange}
-                    className="w-full p-2 rounded bg-white text-gray-900"
+                    className="w-full p-3 rounded-lg bg-white text-gray-900"
                     required
                   />
                 </div>
@@ -411,7 +441,7 @@ export default function UserList() {
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    className="w-full p-2 rounded bg-white text-gray-900"
+                    className="w-full p-3 rounded-lg bg-white text-gray-900"
                     {...(editing ? {} : { required: true, minLength: 6 })}
                   />
                 </div>
@@ -421,7 +451,7 @@ export default function UserList() {
                     name="first_name"
                     value={form.first_name}
                     onChange={handleChange}
-                    className="w-full p-2 rounded bg-white text-gray-900"
+                    className="w-full p-3 rounded-lg bg-white text-gray-900"
                   />
                 </div>
                 <div>
@@ -430,46 +460,54 @@ export default function UserList() {
                     name="last_name"
                     value={form.last_name}
                     onChange={handleChange}
-                    className="w-full p-2 rounded bg-white text-gray-900"
+                    className="w-full p-3 rounded-lg bg-white text-gray-900"
                   />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <input
+                    id="is_active"
                     type="checkbox"
                     name="is_active"
                     checked={!!form.is_active}
                     onChange={handleChange}
+                    className="h-5 w-5"
                   />
-                  <label className="text-sm">Active</label>
+                  <label htmlFor="is_active" className="text-sm">Active</label>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <input
+                    id="is_staff"
                     type="checkbox"
                     name="is_staff"
                     checked={!!form.is_staff}
                     onChange={handleChange}
+                    className="h-5 w-5"
                   />
-                  <label className="text-sm">Staff</label>
+                  <label htmlFor="is_staff" className="text-sm">Staff</label>
                 </div>
-                <div className="md:col-span-2 mt-2 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="px-4 py-2 rounded bg-white/20 border border-white/30"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="px-4 py-2 rounded bg-yellow-300 text-black font-semibold hover:bg-yellow-200"
-                  >
-                    {saving
-                      ? "Saving..."
-                      : editing
-                      ? "Save changes"
-                      : "Create user"}
-                  </button>
+
+                {/* Footer (sticky at bottom on mobile) */}
+                <div className="md:col-span-2">
+                  <div className="sticky bottom-0 -mx-5 -mb-4 px-5 py-3 bg-white/5 backdrop-blur border-t border-white/20 flex flex-col sm:flex-row gap-2 sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowForm(false)}
+                      className="w-full sm:w-auto px-4 py-3 rounded-lg bg-white/20 border border-white/30"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="w-full sm:w-auto px-4 py-3 rounded-lg bg-yellow-300 text-black font-semibold hover:bg-yellow-200 disabled:opacity-60"
+                    >
+                      {saving
+                        ? "Saving..."
+                        : editing
+                        ? "Save changes"
+                        : "Create user"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

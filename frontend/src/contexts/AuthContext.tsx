@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 
-// Types
+/* ---------- Types ---------- */
 interface User {
   id: string;
   email: string;
@@ -28,10 +28,7 @@ interface User {
   last_login: string | null;
 }
 
-interface AuthTokens {
-  access: string;
-  refresh: string;
-}
+interface AuthTokens { access: string; refresh: string; }
 
 interface AuthState {
   user: User | null;
@@ -43,26 +40,16 @@ interface AuthState {
 }
 
 interface LoginResponse {
-  refresh: any;
-  access: any;
+  refresh?: string;
+  access?: string;
   user: User;
-  tokens: AuthTokens;
+  tokens?: AuthTokens; // tolerate both shapes
 }
 
-interface RegisterResponse {
-  refresh: any;
-  access: any;
-  user: User;
-  tokens: AuthTokens;
-}
+interface RegisterResponse extends LoginResponse {}
 
-interface RefreshTokenResponse {
-  access: string;
-}
-
-interface UpdateProfileResponse {
-  user: User;
-}
+interface RefreshTokenResponse { access: string; }
+interface UpdateProfileResponse { user: User; }
 
 type AuthAction =
   | { type: 'SET_LOADING'; payload: boolean }
@@ -84,151 +71,140 @@ const initialState: AuthState = {
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    case 'SET_ERROR':
-      return { ...state, error: action.payload };
+    case 'SET_LOADING': return { ...state, loading: action.payload };
+    case 'SET_ERROR': return { ...state, error: action.payload };
     case 'LOGIN_SUCCESS':
-      return {
-        ...state,
-        user: action.payload.user,
-        tokens: action.payload.tokens,
-        isAuthenticated: true,
-        loading: false,
-        error: null,
-      };
+      return { ...state, user: action.payload.user, tokens: action.payload.tokens, isAuthenticated: true, loading: false, error: null };
     case 'LOGOUT':
-      return {
-        ...state,
-        user: null,
-        tokens: null,
-        isAuthenticated: false,
-        loading: false,
-        error: null,
-      };
-    case 'UPDATE_USER':
-      return { ...state, user: action.payload };
-    case 'UPDATE_TOKENS':
-      return { ...state, tokens: action.payload };
-    default:
-      return state;
-    case 'SET_REHYDRATED':
-      return { ...state, rehydrated: action.payload };
+      return { ...state, user: null, tokens: null, isAuthenticated: false, loading: false, error: null };
+    case 'UPDATE_USER': return { ...state, user: action.payload };
+    case 'UPDATE_TOKENS': return { ...state, tokens: action.payload };
+    case 'SET_REHYDRATED': return { ...state, rehydrated: action.payload };
+    default: return state;
   }
 }
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://arun.yougletech.com/api';
 
+/* ---------- Better error type ---------- */
+class ApiError extends Error {
+  status: number;
+  data: any;
+  constructor(message: string, status: number, data: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+  }
+}
+
+/* ---------- Service ---------- */
 class AuthService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-
     const isFormData = options.body instanceof FormData;
 
     const config: RequestInit = {
-      headers: {
-        ...(isFormData
-          ? {} // 👈 Don't set 'Content-Type' for FormData
-          : { 'Content-Type': 'application/json' }),
-        ...options.headers,
-      },
       ...options,
+      headers: {
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+        ...(options.headers || {}),
+      },
     };
 
-    const response = await fetch(url, config);
-    const data = await response.json();
+    try {
+      const response = await fetch(url, config);
+      const text = await response.text();
+      let data: any = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
 
-    if (!response.ok) {
-      throw new Error(data.error || data.message || 'An error occurred');
+      if (!response.ok) {
+        const detail =
+          (data && typeof data === 'object' && (data.detail ||
+            (Array.isArray(data?.non_field_errors) && data.non_field_errors[0]) ||
+            data.error || data.message)) || '';
+        throw new ApiError(detail || 'Request failed', response.status, data);
+      }
+      return data as T;
+    } catch (err: any) {
+      if (err instanceof ApiError) throw err;
+      throw new ApiError('Network error', 0, null);
     }
-
-    return data as T;
-  }
-  async register(userData: any): Promise<RegisterResponse> {
-    return this.request<RegisterResponse>('/accounts/register/', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
   }
 
-  async login(email: string, password: string): Promise<LoginResponse> {
-    return this.request<LoginResponse>('/accounts/login/', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+  register(userData: any): Promise<RegisterResponse> {
+    return this.request('/accounts/register/', { method: 'POST', body: JSON.stringify(userData) });
   }
 
-  async logout(refreshToken: string): Promise<void> {
-    await this.request('/accounts/logout/', {
-      method: 'POST',
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
+  login(email: string, password: string): Promise<LoginResponse> {
+    return this.request('/accounts/login/', { method: 'POST', body: JSON.stringify({ email, password }) });
   }
 
-  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
-    return this.request<RefreshTokenResponse>('/auth/token/refresh/', {
-      method: 'POST',
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
+  logout(refreshToken: string): Promise<void> {
+    return this.request('/accounts/logout/', { method: 'POST', body: JSON.stringify({ refresh: refreshToken }) });
   }
 
-  async getProfile(accessToken: string): Promise<User> {
-    return this.request<User>('/accounts/profile/me/', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+  // ✅ matches backend route
+  refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    return this.request('/accounts/token/refresh/', { method: 'POST', body: JSON.stringify({ refresh: refreshToken }) });
   }
 
-  async updateProfile(accessToken: string, profileData: any): Promise<UpdateProfileResponse> {
+  getProfile(accessToken: string): Promise<User> {
+    return this.request('/accounts/profile/me/', { headers: { Authorization: `Bearer ${accessToken}` } });
+  }
+
+  updateProfile(accessToken: string, profileData: any): Promise<UpdateProfileResponse> {
     const isFormData = profileData instanceof FormData;
-
-    return this.request<UpdateProfileResponse>('/accounts/profile/update_profile/', {
+    return this.request('/accounts/profile/update_profile/', {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }), // Don't set Content-Type for FormData
-      },
+      headers: { Authorization: `Bearer ${accessToken}`, ...(isFormData ? {} : { 'Content-Type': 'application/json' }) },
       body: profileData,
     });
   }
 
-  async changePassword(accessToken: string, passwordData: any): Promise<void> {
-    await this.request('/accounts/profile/change_password/', {
+  changePassword(accessToken: string, passwordData: any): Promise<void> {
+    return this.request('/accounts/profile/change_password/', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify(passwordData),
     });
   }
 
-  async forgotPassword(email: string): Promise<void> {
-    await this.request('/accounts/forgot-password/', {
+  forgotPassword(email: string): Promise<void> {
+    return this.request('/accounts/forgot-password/', { method: 'POST', body: JSON.stringify({ email }) });
+  }
+
+  resetPassword(token: string, password: string): Promise<void> {
+    return this.request('/accounts/reset-password/', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: password, new_password_confirm: password }),
+    });
+  }
+
+  checkAvailability(field: string, value: string): Promise<any> {
+    const params = new URLSearchParams({ [field]: value });
+    return this.request(`/accounts/check-availability/?${params}`);
+  }
+
+  /* ✅ NEW: email verification helpers */
+  resendActivation(email: string): Promise<{ message: string }> {
+    return this.request('/accounts/resend-activation/', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
   }
 
-  async resetPassword(token: string, password: string): Promise<void> {
-    await this.request('/accounts/reset-password/', {
+  verifyEmail(token: string): Promise<{ message: string }> {
+    return this.request('/accounts/verify-email/', {
       method: 'POST',
-      body: JSON.stringify({
-        token,
-        new_password: password,
-        new_password_confirm: password,
-      }),
+      body: JSON.stringify({ token }),
     });
-  }
-
-  async checkAvailability(field: string, value: string): Promise<any> {
-    const params = new URLSearchParams({ [field]: value });
-    return this.request(`/accounts/check-availability/?${params}`);
   }
 }
 
 const authService = new AuthService();
 
+/* ---------- Context ---------- */
 interface AuthContextType {
   state: AuthState;
   actions: {
@@ -240,213 +216,147 @@ interface AuthContextType {
     forgotPassword: (email: string) => Promise<void>;
     resetPassword: (token: string, password: string) => Promise<void>;
     checkAvailability: (field: string, value: string) => Promise<any>;
+    /* ✅ NEW */
+    resendActivation: (email: string) => Promise<any>;
+    verifyEmail: (token: string) => Promise<any>;
   };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  USER: 'auth_user',
-  TOKENS: 'auth_tokens',
-};
+/* ---------- Local storage ---------- */
+const STORAGE_KEYS = { USER: 'auth_user', TOKENS: 'auth_tokens' };
 
 const storage = {
-  getUser: (): User | null => {
-    try {
-      const user = localStorage.getItem(STORAGE_KEYS.USER);
-      return user ? JSON.parse(user) : null;
-    } catch {
-      return null;
-    }
-  },
-  setUser: (user: User) => {
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-  },
-  getTokens: (): AuthTokens | null => {
-    try {
-      const tokens = localStorage.getItem(STORAGE_KEYS.TOKENS);
-      return tokens ? JSON.parse(tokens) : null;
-    } catch {
-      return null;
-    }
-  },
-  setTokens: (tokens: AuthTokens) => {
-    localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(tokens));
-  },
-  clear: () => {
-    localStorage.removeItem(STORAGE_KEYS.USER);
-    localStorage.removeItem(STORAGE_KEYS.TOKENS);
-  },
+  getUser: (): User | null => { try { const s = localStorage.getItem(STORAGE_KEYS.USER); return s ? JSON.parse(s) : null; } catch { return null; } },
+  setUser: (u: User) => localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(u)),
+  getTokens: (): AuthTokens | null => { try { const s = localStorage.getItem(STORAGE_KEYS.TOKENS); return s ? JSON.parse(s) : null; } catch { return null; } },
+  setTokens: (t: AuthTokens) => localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(t)),
+  clear: () => { localStorage.removeItem(STORAGE_KEYS.USER); localStorage.removeItem(STORAGE_KEYS.TOKENS); },
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-useEffect(() => {
-  const user = storage.getUser();
-  const tokens = storage.getTokens();
+  // Rehydrate
+  useEffect(() => {
+    const user = storage.getUser();
+    const tokens = storage.getTokens();
+    if (user && tokens) dispatch({ type: 'LOGIN_SUCCESS', payload: { user, tokens } });
+    dispatch({ type: 'SET_REHYDRATED', payload: true });
+  }, []);
 
-  console.log("🔐 Rehydrating Auth from storage:", { user, tokens }); 
-
-  if (user && tokens) {
-    dispatch({ type: 'LOGIN_SUCCESS', payload: { user, tokens } });
-  }
-  dispatch({ type: 'SET_REHYDRATED', payload: true });
-}, []);
-
+  // Auto refresh every 30m
   useEffect(() => {
     if (!state.tokens) return;
-
-    const refreshTokenTimer = setInterval(async () => {
+    const timer = setInterval(async () => {
       try {
-        const response = await authService.refreshToken(state.tokens!.refresh);
-        const newTokens = { access: response.access, refresh: state.tokens!.refresh };
-
+        const res = await authService.refreshToken(state.tokens!.refresh);
+        const newTokens = { access: res.access, refresh: state.tokens!.refresh };
         dispatch({ type: 'UPDATE_TOKENS', payload: newTokens });
         storage.setTokens(newTokens);
-      } catch (error) {
-        console.error('Token refresh failed:', error);
+      } catch (e) {
+        console.error('Token refresh failed:', e);
         dispatch({ type: 'LOGOUT' });
         storage.clear();
       }
     }, 30 * 60 * 1000);
-
-    return () => clearInterval(refreshTokenTimer);
+    return () => clearInterval(timer);
   }, [state.tokens]);
 
-const login = async (email: string, password: string) => {
-  try {
+  /* ---------- Actions (rethrow errors) ---------- */
+  const login = async (email: string, password: string) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
-
-    const response = await authService.login(email, password);
-
-    console.log("🔐 Login response from backend:", response);
-
-    const authData = {
-      user: response.user,
-      tokens: {
-        access: response.access,    // ✅ wrap manually
-        refresh: response.refresh,
-      },
-    };
-
-    dispatch({ type: 'LOGIN_SUCCESS', payload: authData });
-
-    console.log("💾 Saving tokens to storage:", authData.tokens);
-    storage.setUser(authData.user);
-    storage.setTokens(authData.tokens);
-
-    console.log("📦 Tokens in localStorage after save:", storage.getTokens());
-  } catch (error: any) {
-    dispatch({ type: 'SET_ERROR', payload: error.message });
-    throw error;
-  } finally {
-    dispatch({ type: 'SET_LOADING', payload: false });
-  }
-};
-
-const register = async (userData: any) => {
-  try {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
-
-    const response = await authService.register(userData);
-
-    const authData = {
-      user: response.user,
-      tokens: {
-        access: response.access,   // ✅ wrap manually
-        refresh: response.refresh,
-      },
-    };
-
-    dispatch({ type: 'LOGIN_SUCCESS', payload: authData });
-    storage.setUser(authData.user);
-    storage.setTokens(authData.tokens);
-  } catch (error: any) {
-    dispatch({ type: 'SET_ERROR', payload: error.message });
-    throw error;
-  } finally {
-    dispatch({ type: 'SET_LOADING', payload: false });
-  }
-};
-
-  const logout = async () => {
     try {
-      if (state.tokens) {
-        await authService.logout(state.tokens.refresh);
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
+      const res = await authService.login(email, password);
+      const tokens: AuthTokens =
+        (res.tokens as AuthTokens) || { access: res.access!, refresh: res.refresh! };
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user: res.user, tokens } });
+      storage.setUser(res.user);
+      storage.setTokens(tokens);
+    } catch (err) {
+      // Rethrow so forms can show specific message
+      throw err;
     } finally {
-      dispatch({ type: 'LOGOUT' });
-      storage.clear();
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
-  const updateUser = async (userData: any) => {
+  const register = async (userData: any) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      const res = await authService.register(userData);
+      const tokens: AuthTokens =
+        (res.tokens as AuthTokens) || { access: res.access!, refresh: res.refresh! };
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user: res.user, tokens } });
+      storage.setUser(res.user);
+      storage.setTokens(tokens);
+    } catch (err) {
+      throw err;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
 
+  const logout = async () => {
+    try { if (state.tokens) await authService.logout(state.tokens.refresh); }
+    catch (e) { console.error('Logout error:', e); }
+    finally { dispatch({ type: 'LOGOUT' }); storage.clear(); }
+  };
+
+  const updateUser = async (userData: any) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+    try {
       if (!state.tokens) throw new Error('Not authenticated');
-
-      const response = await authService.updateProfile(state.tokens.access, userData);
-      dispatch({ type: 'UPDATE_USER', payload: response.user });
-      storage.setUser(response.user);
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-      throw error;
+      const res = await authService.updateProfile(state.tokens.access, userData);
+      dispatch({ type: 'UPDATE_USER', payload: res.user });
+      storage.setUser(res.user);
+    } catch (err: any) {
+      dispatch({ type: 'SET_ERROR', payload: err?.message ?? 'Update failed' });
+      throw err;
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   const changePassword = async (passwordData: any) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-
       if (!state.tokens) throw new Error('Not authenticated');
       await authService.changePassword(state.tokens.access, passwordData);
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-      throw error;
+    } catch (err: any) {
+      dispatch({ type: 'SET_ERROR', payload: err?.message ?? 'Change password failed' });
+      throw err;
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   const forgotPassword = async (email: string) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      await authService.forgotPassword(email);
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-      throw error;
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+    try { await authService.forgotPassword(email); }
+    catch (err: any) { dispatch({ type: 'SET_ERROR', payload: err?.message ?? 'Failed' }); throw err; }
+    finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };
 
   const resetPassword = async (token: string, password: string) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      await authService.resetPassword(token, password);
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-      throw error;
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+    try { await authService.resetPassword(token, password); }
+    catch (err: any) { dispatch({ type: 'SET_ERROR', payload: err?.message ?? 'Failed' }); throw err; }
+    finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };
 
-  const checkAvailability = async (field: string, value: string) => {
-    return authService.checkAvailability(field, value);
-  };
+  const checkAvailability = (field: string, value: string) => authService.checkAvailability(field, value);
+
+  /* ✅ NEW: passthrough actions for email verification */
+  const resendActivation = (email: string) => authService.resendActivation(email);
+  const verifyEmail = (token: string) => authService.verifyEmail(token);
 
   const contextValue: AuthContextType = {
     state,
@@ -459,6 +369,8 @@ const register = async (userData: any) => {
       forgotPassword,
       resetPassword,
       checkAvailability,
+      resendActivation,   // ✅
+      verifyEmail,        // ✅
     },
   };
 
@@ -466,11 +378,9 @@ const register = async (userData: any) => {
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
 };
 
 export default AuthContext;

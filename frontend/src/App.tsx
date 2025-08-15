@@ -18,6 +18,9 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import EditProfile from "./pages/DashboardFeatures/EditProfile";
 import UserDashboard from "./pages/UserDashboard";
+import ResendActivation from './pages/auth/ResendActivation';
+import VerifyEmail from './pages/auth/VerifyEmail';
+import VerifyResult from './pages/auth/VerifyResult';
 
 // Admin Pages
 import CategoryEdit from "./pages/AdminFeatures/CategoryEdit";
@@ -42,6 +45,9 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/resend-activation" element={<ResendActivation />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/verify-result" element={<VerifyResult />} />
               <Route path="/catalog" element={<Catalog />} />
               <Route path="/catalog/category/:categoryId" element={<CategoryDetail />} />
               <Route path="/catalog/:categoryId" element={<CategoryDetail />} />
