@@ -110,14 +110,13 @@ const EditProfile = () => {
 
         {/* Profile Image Upload */}
         <div className="flex items-center gap-4 mb-6">
-          <img
-            src={imagePreview || "https://via.placeholder.com/100x100.png?text=User"}
-            onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://via.placeholder.com/100x100.png?text=User";
-            }}
-            alt="Profile"
-            className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-lg"
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Profile"
+              className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-lg"
             />
+          )}
           <div>
             <button
               type="button"

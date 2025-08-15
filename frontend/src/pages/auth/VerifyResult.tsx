@@ -47,6 +47,8 @@ export default function VerifyResult() {
           </div>
         </div>
       </div>
+      <br />
+      
       <Footer />
     </div>
   );
