@@ -31,6 +31,11 @@ import ProductList from "./pages/AdminFeatures/ProductList";
 import ProductManagement from "./pages/AdminFeatures/ProductManagement";
 import UserList from "./pages/AdminFeatures/UserList";
 // Route Guards
+import About from "./pages/About";
+import BlogEditor from "./pages/AdminFeatures/BlogEditor";
+import BlogManagement from "./pages/AdminFeatures/BlogManagement";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import AdminRoute from "./routes/AdminRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -43,6 +48,9 @@ function App() {
             <Routes>
               {/* Public Pages */}
               <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/resend-activation" element={<ResendActivation />} />
@@ -159,7 +167,31 @@ function App() {
                   </AdminRoute>
                 }
               />
-                            {/* Fallback Unauthorized */}
+              <Route
+                path="/admin/blog"
+                element={
+                  <AdminRoute>
+                    <BlogManagement />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/blog/add"
+                element={
+                  <AdminRoute>
+                    <BlogEditor />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/blog/edit/:id"
+                element={
+                  <AdminRoute>
+                    <BlogEditor />
+                  </AdminRoute>
+                }
+              />
+              {/* Fallback Unauthorized */}
               <Route
                 path="/unauthorized"
                 element={

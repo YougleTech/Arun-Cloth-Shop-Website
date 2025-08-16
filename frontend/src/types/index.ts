@@ -111,3 +111,61 @@ export interface QuoteRequest extends ContactForm {
   delivery_location: string;
   urgency: 'low' | 'medium' | 'high';
 }
+
+// Blog Types
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  featured_image: string | null;
+  author: string;
+  author_name: string;
+  category: string;
+  tags: string[];
+  is_published: boolean;
+  is_featured: boolean;
+  views_count: number;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+  meta_title: string;
+  meta_description: string;
+}
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  posts_count: number;
+  is_active: boolean;
+}
+
+export interface BlogComment {
+  id: string;
+  post: string;
+  author_name: string;
+  author_email: string;
+  content: string;
+  is_approved: boolean;
+  created_at: string;
+}
+
+export interface CreateBlogPost {
+  title: string;
+  excerpt: string;
+  content: string;
+  featured_image?: File | null;
+  category: string;
+  tags: string[];
+  is_published: boolean;
+  is_featured: boolean;
+  meta_title?: string;
+  meta_description?: string;
+}
+
+export interface UpdateBlogPost extends Partial<CreateBlogPost> {
+  id: string;
+}

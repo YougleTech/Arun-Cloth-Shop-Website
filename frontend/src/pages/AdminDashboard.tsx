@@ -1,12 +1,12 @@
 import {
-  ArrowLeft,
-  BarChart2,
-  BookOpenCheck,
-  FileText,
-  ImageIcon,
-  Package,
-  Settings,
-  UserCog,
+    ArrowLeft,
+    BarChart2,
+    BookOpenCheck,
+    FileText,
+    ImageIcon,
+    Package,
+    Settings,
+    UserCog,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -56,9 +56,10 @@ const AdminDashboard = () => {
     },
     {
       icon: <BookOpenCheck className="w-6 h-6" />,
-      title: "कन्टेन्ट व्यवस्थापन",
-      desc: "ब्लग, FAQs, र अन्य सामग्रीहरू सम्पादन गर्नुहोस्।",
+      title: "ब्लग व्यवस्थापन",
+      desc: "ब्लग पोस्टहरू सिर्जना, सम्पादन र व्यवस्थापन गर्नुहोस्।",
       gradient: "from-pink-400 to-indigo-500",
+      link: "/admin/blog",
     },
     {
       icon: <Settings className="w-6 h-6" />,
