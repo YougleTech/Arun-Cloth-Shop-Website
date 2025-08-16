@@ -36,6 +36,7 @@ urlpatterns = [
     path('api/', include('cart.urls')),
     path('api/', include('orders.urls')),
     path('api/', include('catalog.urls')),
+    path('api/blog/', include('blog.urls')),
 
     # --- OpenAPI schema + docs (publicly accessible) ---
     path(
